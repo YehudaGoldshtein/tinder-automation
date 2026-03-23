@@ -9,6 +9,7 @@ import { getMatches, openMatchById } from './actions/matches';
 import { readMessages, sendMessage } from './actions/messages';
 import { sendOpeners, sendFollowUps } from './actions/opener';
 import { scanProfile } from './actions/profile-scan';
+import { getConversationsSince } from './actions/conversation-list';
 import { runDailyRoutine } from './routines/daily';
 import logger from './utils/logger';
 
@@ -245,6 +246,31 @@ server.tool(
     }
 
     return { content: [{ type: 'text', text: lines.join('\n') }] };
+  }
+);
+
+// --- Conversation List ---
+
+server.tool(
+  'tinder_conversations_since',
+  'Get list of all conversations with profile/conversation URLs since a given date. Returns name, matchId, URLs, last message, date, and sender.',
+  { since: z.string().optional().describe('ISO date string (e.g. "2026-03-01"). If omitted, returns all conversations.') },
+  async ({ since }) => {
+    await ensureBrowser();
+    const page = getPage();
+    const convs = await getConversationsSince(page, since);
+
+    const lines = convs.map((c, i) => {
+      const from = c.lastMessageFrom === 'me' ? '(you)' : c.lastMessageFrom === 'them' ? '(them)' : '';
+      return `${i + 1}. ${c.name} ${c.lastMessageDate ? `[${c.lastMessageDate}]` : ''} ${from}\n   Last: "${c.lastMessage.slice(0, 60)}"\n   URL: ${c.conversationUrl}`;
+    });
+
+    return {
+      content: [{
+        type: 'text',
+        text: `${convs.length} conversations${since ? ` since ${since}` : ''}:\n\n${lines.join('\n\n')}`,
+      }],
+    };
   }
 );
 
