@@ -1,0 +1,9 @@
+node_modules/
+dist/
+browser-data/
+logs/
+data/state.json
+.env
+*.html
+*.txt
+src/test-*.ts

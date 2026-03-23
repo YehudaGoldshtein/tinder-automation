@@ -1,0 +1,34 @@
+browser:
+  headless: false
+  userDataDir: ./browser-data
+  slowMo: 50
+  viewport:
+    width: 1280
+    height: 800
+
+swipe:
+  dailyLimit: 80
+  likeRatio: 0.7
+  delayBetweenSwipes:
+    min: 2000
+    max: 6000
+  longPauseChance: 0.05
+  longPauseRange:
+    min: 30000
+    max: 60000
+
+messages:
+  openers:
+    - "Hey {{name}}! What's the most spontaneous thing you've done recently?"
+    - "Hi {{name}} 👋 what brings you to Asunción?"
+    - "{{name}}! Coffee or cocktails for a first meetup?"
+  followUp:
+    staleAfterHours: 48
+    templates:
+      - "Hey, how's your week going?"
+      - "Still up for meeting sometime?"
+  maxNewOpeners: 10
+
+logging:
+  level: info
+  file: ./logs/tinder-auto.log
