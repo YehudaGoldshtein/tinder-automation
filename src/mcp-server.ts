@@ -8,6 +8,7 @@ import { readCurrentProfile, swipeRight, swipeLeft, swipeSession } from './actio
 import { getMatches, openMatchById } from './actions/matches';
 import { readMessages, sendMessage } from './actions/messages';
 import { sendOpeners, sendFollowUps } from './actions/opener';
+import { scanProfile } from './actions/profile-scan';
 import { runDailyRoutine } from './routines/daily';
 import logger from './utils/logger';
 
@@ -182,6 +183,68 @@ server.tool(
           : `Failed to send message to ${match.name}`,
       }],
     };
+  }
+);
+
+// --- Profile Scan ---
+
+server.tool(
+  'tinder_scan_profile',
+  'Full profile scan: photos, bio, interests, lifestyle, basics, looking for, and all messages with a match',
+  { name: z.string().describe('Name of the match to scan') },
+  async ({ name }) => {
+    await ensureBrowser();
+    const page = getPage();
+    const matches = await getMatches(page);
+    const match = matches.find(m => m.name.toLowerCase() === name.toLowerCase());
+    if (!match) {
+      return { content: [{ type: 'text', text: `Match "${name}" not found` }] };
+    }
+    await openMatchById(page, match.id);
+    await page.waitForTimeout(2000);
+    await dismissPopups(page);
+    const profile = await scanProfile(page);
+
+    // Format output
+    const lines: string[] = [];
+    lines.push(`=== ${profile.name || name}, ${profile.age} ===`);
+    if (profile.distance) lines.push(`Distance: ${profile.distance}`);
+    if (profile.bio) lines.push(`Bio: ${profile.bio}`);
+    if (profile.lookingFor) lines.push(`Looking for: ${profile.lookingFor}`);
+
+    if (profile.photos.length > 0) {
+      lines.push(`\nPhotos (${profile.photos.length}):`);
+      profile.photos.forEach((p, i) => lines.push(`  ${i + 1}. ${p}`));
+    }
+
+    if (Object.keys(profile.essentials).length > 0) {
+      lines.push('\nEssentials:');
+      for (const [k, v] of Object.entries(profile.essentials)) lines.push(`  ${k}: ${v}`);
+    }
+    if (Object.keys(profile.lifestyle).length > 0) {
+      lines.push('\nLifestyle:');
+      for (const [k, v] of Object.entries(profile.lifestyle)) lines.push(`  ${k}: ${v}`);
+    }
+    if (Object.keys(profile.basics).length > 0) {
+      lines.push('\nBasics:');
+      for (const [k, v] of Object.entries(profile.basics)) lines.push(`  ${k}: ${v}`);
+    }
+    if (profile.interests.length > 0) {
+      lines.push(`\nInterests: ${profile.interests.join(', ')}`);
+    }
+
+    if (profile.messages.length > 0) {
+      lines.push(`\nMessages (${profile.messages.length}):`);
+      profile.messages.forEach(m => {
+        const who = m.from === 'me' ? 'YOU' : 'THEM';
+        const time = m.time ? ` [${m.time}]` : '';
+        lines.push(`  ${who}${time}: ${m.text}`);
+      });
+    } else {
+      lines.push('\nNo messages yet.');
+    }
+
+    return { content: [{ type: 'text', text: lines.join('\n') }] };
   }
 );
 
