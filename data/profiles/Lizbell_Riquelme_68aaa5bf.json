@@ -1,0 +1,62 @@
+{
+  "matchId": "68aaa5bf72a9d35e606dcbe168c9808e27eb2c32a46731bd",
+  "conversationUrl": "https://tinder.com/app/messages/68aaa5bf72a9d35e606dcbe168c9808e27eb2c32a46731bd",
+  "scannedAt": "2026-03-23T18:08:51.809Z",
+  "name": "Lizbell Riquelme",
+  "age": "26",
+  "distance": "19 kilometers away",
+  "bio": "You:Hola",
+  "lookingFor": "New friends",
+  "photos": [
+    "https://images-ssl.gotinder.com/68c9808e27eb2c32a46731bd/640x800_a66428b5-8e01-4b9d-b8bf-c83749a5aa26.jpg",
+    "https://images-ssl.gotinder.com/67d38db3f12dcb38754718b8/320x400_848c8384-c429-45ac-8542-4488a207b3d8.jpg",
+    "https://images-ssl.gotinder.com/63014c59cc7a2b0100776739/320x400_58fce056-f8df-4aab-996a-8e09297ad97c.jpg",
+    "https://images-ssl.gotinder.com/5e8cf80136dd430100b3a9c2/320x400_8dc642ad-1608-44cf-affc-e9e45bb59de1.jpg",
+    "https://images-ssl.gotinder.com/695f0d589f2d719da791c171/320x400_a806dcb7-ced2-4063-8d0c-b8d0d443d595.jpg",
+    "https://images-ssl.gotinder.com/68f02b77ec6acd52c1404259/320x400_2acbd608-46ea-40e0-8906-29106e914b6b.jpg",
+    "https://images-ssl.gotinder.com/64fd7c980803320100412941/320x400_1721b333-1d3c-4b44-8591-e04925f0b8ff.jpg",
+    "https://images-ssl.gotinder.com/69b1e2e2f3e6033a847c4305/320x400_cbbf7735-9778-4332-8244-9936a96439cd.jpg",
+    "https://images-ssl.gotinder.com/69bb64c15e637011cb2730e2/320x400_3cf134f3-805f-4707-bf31-f3b0bf285d0a.jpg",
+    "https://images-ssl.gotinder.com/69933c700ae04d6da2737e2c/320x400_b1f47400-3b55-47c9-94e0-272a5719156e.jpg",
+    "https://images-ssl.gotinder.com/61df8f40cf085601000ecc33/320x400_988ae4a3-8217-46a5-a60d-edda5e84e6cb.jpg",
+    "https://images-ssl.gotinder.com/67e9d1dc7cd787e8fe642d2d/320x400_269970d2-7da6-4681-97fa-144f849bdbae.jpg",
+    "https://images-ssl.gotinder.com/628a673a9da3d9010067ba1e/320x400_4678aca1-15d1-41a4-bccb-d85a81ea4f47.jpg",
+    "https://images-ssl.gotinder.com/6793a80db6e15882a8a997d0/320x400_dd32db85-d52b-443d-82f9-ca71ff027339.jpg",
+    "https://images-ssl.gotinder.com/68aaa5bf72a9d35e606dcbe1/640x800_75_ec685219-5823-49c9-b50c-9a5715485a77.webp"
+  ],
+  "essentials": {},
+  "lifestyle": {
+    "Pets": "Cat",
+    "Drinking": "Not for me",
+    "Smoking": "Non-smoker",
+    "Workout": "Never"
+  },
+  "basics": {
+    "Communication Style": "Better in person",
+    "Love Style": "Time together",
+    "Education": "In College",
+    "Zodiac": "Taurus"
+  },
+  "interests": [
+    "Nature",
+    "Trying New Things",
+    "Mocktails",
+    "Travel",
+    "Alternative music",
+    "Street Food",
+    "Documentaries",
+    "Movies"
+  ],
+  "messages": [
+    {
+      "from": "me",
+      "text": "Hola",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Oye, justo empezó el finde y me acordé de ti… ¿qué planes tienes? 👀",
+      "time": ""
+    }
+  ]
+}

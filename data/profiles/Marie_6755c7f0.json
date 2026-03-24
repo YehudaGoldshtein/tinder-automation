@@ -1,0 +1,108 @@
+{
+  "matchId": "6755c7f0a7bbc0010064165568c9808e27eb2c32a46731bd",
+  "conversationUrl": "https://tinder.com/app/messages/6755c7f0a7bbc0010064165568c9808e27eb2c32a46731bd",
+  "scannedAt": "2026-03-23T17:57:15.471Z",
+  "name": "Marie",
+  "age": "24",
+  "distance": "2 kilometers away",
+  "bio": "You:Is the picture in new York?",
+  "lookingFor": "Still figuring it out",
+  "photos": [
+    "https://images-ssl.gotinder.com/68c9808e27eb2c32a46731bd/640x800_a66428b5-8e01-4b9d-b8bf-c83749a5aa26.jpg",
+    "https://images-ssl.gotinder.com/61001f363cc23b0100445a09/640x800_53fd630c-7a38-4452-b2b3-9655d459ef74.jpg",
+    "https://images-ssl.gotinder.com/66bec9c668a03a010065a8cf/640x800_4d78700f-4c38-4b29-9070-c3b63fe842ad.jpg",
+    "https://images-ssl.gotinder.com/68efa2e772a9d305558e29b4/640x800_ff4034bf-f4a7-4e22-aa93-c1c6b24c7bc8.jpg",
+    "https://images-ssl.gotinder.com/691c8e6aaa3e797415e52f56/640x800_d85b100b-7521-4f4a-8e78-27a091b0d2a9.jpg",
+    "https://images-ssl.gotinder.com/699146d84a92dbaeb23e2add/640x800_ab8bd4e2-a1be-4f5f-872e-edabe766a744.jpg",
+    "https://images-ssl.gotinder.com/69bf22d1130cf92ef947dfcb/640x800_fd166d35-7d87-440c-8523-5254a59f41d0.jpg",
+    "https://images-ssl.gotinder.com/68cb5a50ecf16930cb8855b3/640x800_d90fbd47-4100-43ca-95b1-be53486fbcf8.jpg",
+    "https://images-ssl.gotinder.com/6755c7f0a7bbc00100641655/640x800_75_c016eb74-3af6-4369-91f0-3efb9375dec6.webp"
+  ],
+  "essentials": {},
+  "lifestyle": {
+    "Pets": "Cat",
+    "Drinking": "Not for me",
+    "Smoking": "Non-smoker",
+    "Workout": "Everyday"
+  },
+  "basics": {
+    "Zodiac": "Gemini",
+    "Love Style": "Thoughtful gestures",
+    "Communication Style": "Better in person",
+    "Education": "In College"
+  },
+  "interests": [
+    "Running",
+    "Gym",
+    "Working out",
+    "Cafe hopping",
+    "Martial Arts"
+  ],
+  "messages": [
+    {
+      "from": "me",
+      "text": "Is the picture in new York?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "que foto",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "De Starbucks",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "ahh no no, en buenos aires",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Haaa",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Me acuerda de nuevo York",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "sos de israel?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Entonces eres de argentina?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "siempre quise conocer",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Si soy de israel",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "soy de aca, esa foto es de cuando viajé",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Muybienn",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "No mucha gente aquí viajan",
+      "time": ""
+    }
+  ]
+}

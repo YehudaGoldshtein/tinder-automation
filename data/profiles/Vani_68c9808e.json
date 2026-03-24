@@ -1,0 +1,539 @@
+{
+  "matchId": "68c9808e27eb2c32a46731bd6995be11a5949ad25c15fcf1",
+  "conversationUrl": "https://tinder.com/app/messages/68c9808e27eb2c32a46731bd6995be11a5949ad25c15fcf1",
+  "scannedAt": "2026-03-23T17:55:50.187Z",
+  "name": "Vani",
+  "age": "39",
+  "distance": "8 kilometers away",
+  "bio": "Vani:Muy mal tu español jaaaja",
+  "lookingFor": "New friends",
+  "photos": [
+    "https://images-ssl.gotinder.com/68c9808e27eb2c32a46731bd/640x800_a66428b5-8e01-4b9d-b8bf-c83749a5aa26.jpg",
+    "https://images-ssl.gotinder.com/61001f363cc23b0100445a09/640x800_53fd630c-7a38-4452-b2b3-9655d459ef74.jpg",
+    "https://images-ssl.gotinder.com/66bec9c668a03a010065a8cf/640x800_4d78700f-4c38-4b29-9070-c3b63fe842ad.jpg",
+    "https://images-ssl.gotinder.com/68efa2e772a9d305558e29b4/640x800_ff4034bf-f4a7-4e22-aa93-c1c6b24c7bc8.jpg",
+    "https://images-ssl.gotinder.com/691c8e6aaa3e797415e52f56/640x800_d85b100b-7521-4f4a-8e78-27a091b0d2a9.jpg",
+    "https://images-ssl.gotinder.com/699146d84a92dbaeb23e2add/640x800_ab8bd4e2-a1be-4f5f-872e-edabe766a744.jpg",
+    "https://images-ssl.gotinder.com/69bf22d1130cf92ef947dfcb/640x800_fd166d35-7d87-440c-8523-5254a59f41d0.jpg",
+    "https://images-ssl.gotinder.com/68cb5a50ecf16930cb8855b3/640x800_d90fbd47-4100-43ca-95b1-be53486fbcf8.jpg",
+    "https://images-ssl.gotinder.com/6995be11a5949ad25c15fcf1/640x800_75_4b71cd1e-18c0-47c3-879f-baf63232d7e5.webp"
+  ],
+  "essentials": {},
+  "lifestyle": {},
+  "basics": {
+    "Zodiac": "Aquarius"
+  },
+  "interests": [
+    "Coffee",
+    "Wine",
+    "Food tours",
+    "Brunch"
+  ],
+  "messages": [
+    {
+      "from": "them",
+      "text": "Muy mal tu español jaaaja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Que haces el fin de semana ?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Salgo con una chica guapísima",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Eso está muy bien jaja",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Se llama vani",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Jajaja",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Creo que le conoces 😘",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Sí y vos no jajaja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "La verdad que hoy trabajo en la noche",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Verdad",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Que pena",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "En qué trabajas?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "🙃",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Secreto",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Puedes ir a visitarme a mi trabajo",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Jajaja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Trabajo en una discoteca",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Uno de mis 3 trabajo jajaja",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Si voy a visitar",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Oka",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Mas tarde",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Si abrimos muy tarde",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Un bar o que?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Es disco",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Ve y te invito unos tragos jaja",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Entonces tomo gratis esta noche ah?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Sii",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Jaja verdad?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Si",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Okkk",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Donde te quedas ?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Vamos a tener una noche locaaaa",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Carmelitas",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Me sale q estás a un kilómetro",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Pero yo no tomo",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Ósea cuando trabajo",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Yo voy a tomar para ambos jaja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Oka",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "La disco está en carmelitas",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Se llama lux",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Yesss",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Conoces ?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Pero que haces hasta que abiertan",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "No conozco nombres, pero puede ser que se vi",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Ahora llegue a mi casa , estoy esperando que llegue el técnico del aire porque gotea el aire de mi cuarto y luego dormiré , hasta la hora de trabajar",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Ahh",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Wow",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Ah y debo pasar por la oficina de mi otro trabajo",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Trabajas mucho",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "I admire that",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Tengo una reserva de airbnb y debo dejar unas cosas ahí",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Descansa bebé",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Hablamos mas tarde😘😘😘",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Oka",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Holi",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Holaa",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Cómo estás",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Descansaste?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "La verdad que no pude",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Oyyy",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Que pasó?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Vino el técnico del aire",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Y estába organizando una reservas",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Ayyy",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "También trabajo en un hotel familiar jeje y estoy con eso",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Lo siento por eso",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "You ?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Si, descansé mucho jaja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Jajja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Donde mismo te quedas ? Hasta cuando estás por aquí",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Ahora estoy en la taperia",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Oki q tal esta !?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "La disco donde trabajo se abre a las 00 y es a dos cuadras",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Te estoy esperando",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Jaja ya volvimos a casa",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Oka",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Mañana trabajas?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Buen día",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Hoy no",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Ósea solo desde mi celular",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Que buenoo",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Usted ?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "No trabajo hoy nada",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Que haces hoy ? Aparte de no trabajar",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Ahora voy a entrar al centro para ver lugares, como una turista buena",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Okiii",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Que pases bien 🙃",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Hasta cuando te quedas ?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Verdad no sé jaja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Oka",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Que haces mañana",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Trabajar y en la tarde creo que nada",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Perfecto",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Tienes una amiga para mi amigo? Jaja",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Hacemos una sita duble",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Tienes foto de tu amigo",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Sii",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "En WhatsApp",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Oka",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Mándame a mi WhatsApp",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "+595972929100",
+      "time": ""
+    }
+  ]
+}

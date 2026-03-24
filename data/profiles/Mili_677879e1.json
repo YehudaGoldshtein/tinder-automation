@@ -1,0 +1,296 @@
+{
+  "matchId": "677879e144ddf237569356f468c9808e27eb2c32a46731bd",
+  "conversationUrl": "https://tinder.com/app/messages/677879e144ddf237569356f468c9808e27eb2c32a46731bd",
+  "scannedAt": "2026-03-23T17:52:34.305Z",
+  "name": "Mili",
+  "age": "27",
+  "distance": "13 kilometers away",
+  "bio": "You:Hermosa",
+  "lookingFor": "New friends",
+  "photos": [
+    "https://images-ssl.gotinder.com/68c9808e27eb2c32a46731bd/640x800_a66428b5-8e01-4b9d-b8bf-c83749a5aa26.jpg",
+    "https://images-ssl.gotinder.com/61001f363cc23b0100445a09/640x800_53fd630c-7a38-4452-b2b3-9655d459ef74.jpg",
+    "https://images-ssl.gotinder.com/66bec9c668a03a010065a8cf/640x800_4d78700f-4c38-4b29-9070-c3b63fe842ad.jpg",
+    "https://images-ssl.gotinder.com/68efa2e772a9d305558e29b4/640x800_ff4034bf-f4a7-4e22-aa93-c1c6b24c7bc8.jpg",
+    "https://images-ssl.gotinder.com/691c8e6aaa3e797415e52f56/640x800_d85b100b-7521-4f4a-8e78-27a091b0d2a9.jpg",
+    "https://images-ssl.gotinder.com/699146d84a92dbaeb23e2add/640x800_ab8bd4e2-a1be-4f5f-872e-edabe766a744.jpg",
+    "https://images-ssl.gotinder.com/69bf22d1130cf92ef947dfcb/640x800_fd166d35-7d87-440c-8523-5254a59f41d0.jpg",
+    "https://images-ssl.gotinder.com/68cb5a50ecf16930cb8855b3/640x800_d90fbd47-4100-43ca-95b1-be53486fbcf8.jpg",
+    "https://images-ssl.gotinder.com/677879e144ddf237569356f4/640x800_75_6ab4ffde-b560-414c-9ce7-032b58390666.webp"
+  ],
+  "essentials": {},
+  "lifestyle": {
+    "Pets": "Dog",
+    "Drinking": "Sober",
+    "Smoking": "Non-smoker",
+    "Workout": "Everyday"
+  },
+  "basics": {
+    "Zodiac": "Taurus",
+    "Education": "Bachelors",
+    "Communication Style": "I'm slow to answer on WhatsApp"
+  },
+  "interests": [],
+  "messages": [
+    {
+      "from": "me",
+      "text": "Hermosa",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Holaaa:)",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Estamos muy cerca parece",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Cómo estás? Cómo va tu fin de semana",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Yo en el five hotel, vos?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Cómo cerca",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Estoy cerca de carmelitas",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Por ahora bien, viendo que hacer, llegué hoy pasado el mediodía a Paraguay",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "No conozco nada aquí",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Hace cuanto estás?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "10 minutos de caminar, bueno",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Mira como un hotel bueno jaja",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Lo buscó en google",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Cómo 3 días",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "De dónde eres?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Haha si, cerca",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "De Argentina",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Te quedas un tiempo acá?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Ya sabía jaja",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Jaja por qué?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Las chicas guapas como ti, es argentino",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Creo que voy a quedarme si",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Haha ya conoces Argentina?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Mi amigo llegó de ahí",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Que haces hoy",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Vamos a salir",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Estas sola aquí?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Pensaba ir al bar del hotel a ver qué tal un poco todo pero pasé por ahí y no me gustó tanto haha estoy un poco cansada la verdad, quizás duerma un ratito y luego estoy para hacer algo",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Hoy si estoy sola, mañana llega mi socio",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Perfecto, suena un plan perfecto",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Entonces estás aquí por negocios?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Si, me quedaré hasta el martes y defino si vengo aquí unos meses por negocios o no",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Vos? Que haces por acá?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "So un nomada digital",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Y trabajo y viajo",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Ok estamos en un bar se llama la taperia",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Ven, estamos unas turistas",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Mi WhatsApp es +972504265054",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Ey",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Claramente me quedé dormida haha",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Cómo estás?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Bienn",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Un poco resaca",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Descansaste bien?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Haha si, super",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Ahora disfrutando que acaba de salir el sol",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Tenes ig?",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "De verdad no😐",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Estoy viejo jaja",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Hablamos en WhatsApp",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Entonces saliste hoy?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Recién te escribí a whapp",
+      "time": ""
+    }
+  ]
+}

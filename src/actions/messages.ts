@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
 import { S } from '../selectors';
 import { Message } from '../types';
-import { humanDelay } from '../utils/delay';
+import { humanDelay, actionPause, microPause, humanType, readingDelay } from '../utils/delay';
 import logger from '../utils/logger';
 
 /** Read messages in the currently open conversation */
@@ -17,16 +17,13 @@ export async function readMessages(page: Page): Promise<Message[]> {
 
     for (let i = 0; i < count; i++) {
       const bubble = bubbles.nth(i);
-      // Get text from the span.text inside the bubble
       const textEl = bubble.locator(S.CHAT_MSG_TEXT).first();
       const text = await textEl.textContent({ timeout: 1000 }).catch(() => '');
       if (!text?.trim()) continue;
 
-      // Determine direction: "received" in className means it's from them
       const classList = await bubble.getAttribute('class') || '';
       const isMe = !classList.includes('received');
 
-      // Try to get timestamp from nearby msg__status
       const statusEl = bubble.locator('..').locator(S.CHAT_MSG_STATUS).first();
       const time = await statusEl.textContent({ timeout: 500 }).catch(() => '');
 
@@ -46,21 +43,30 @@ export async function readMessages(page: Page): Promise<Message[]> {
 /** Send a message in the currently open conversation */
 export async function sendMessage(page: Page, text: string): Promise<boolean> {
   try {
-    // Find the textarea with placeholder "Type a message"
+    // Simulate reading the conversation first
+    await readingDelay(text);
+
+    // Find the textarea
     const input = page.locator(S.CHAT_INPUT).first();
     await input.waitFor({ timeout: 5000 });
+
+    // Pause before clicking input (like moving mouse to it)
+    await microPause();
     await input.click();
-    await humanDelay();
 
-    // Type with human-like speed (30-80ms per keystroke)
+    // Pause before starting to type (thinking what to write)
+    await humanDelay(2000, 1000);
+
+    // Human-style typing with variable speed and occasional typos
     await input.fill('');
-    await page.keyboard.type(text, { delay: 30 + Math.random() * 50 });
-    await humanDelay();
+    await humanType(page, text);
 
-    // Click submit button (it gets enabled after typing)
+    // Pause after typing (re-reading what you wrote)
+    await humanDelay(1500, 800);
+
+    // Click submit button
     const sendBtn = page.locator(S.CHAT_SEND_BUTTON).first();
     await sendBtn.waitFor({ timeout: 3000 });
-    // Wait for button to become enabled
     await page.waitForFunction(
       (sel) => {
         const btn = document.querySelector(sel) as HTMLButtonElement;
@@ -69,9 +75,10 @@ export async function sendMessage(page: Page, text: string): Promise<boolean> {
       S.CHAT_SEND_BUTTON,
       { timeout: 3000 }
     ).catch(() => {
-      // Fallback: press Enter
       logger.info('Send button not enabled, pressing Enter instead');
     });
+
+    await microPause();
 
     try {
       if (await sendBtn.isEnabled({ timeout: 500 })) {
@@ -84,7 +91,9 @@ export async function sendMessage(page: Page, text: string): Promise<boolean> {
     }
 
     logger.info(`Message sent: "${text.slice(0, 50)}${text.length > 50 ? '...' : ''}"`);
-    await humanDelay();
+
+    // Post-send pause (like watching the message appear)
+    await actionPause();
     return true;
   } catch (e) {
     logger.error(`Failed to send message: ${e}`);

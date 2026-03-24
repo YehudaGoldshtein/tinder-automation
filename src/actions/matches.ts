@@ -48,10 +48,27 @@ export async function getMatches(page: Page): Promise<Match[]> {
     logger.warn('Could not click Messages tab, conversations may not be visible');
   }
 
+  // Scroll message list to load all conversations
+  let prevCount = 0;
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const count = await page.locator(S.MESSAGE_CONV_LINK).count();
+    logger.info(`Scroll attempt ${attempt + 1}: ${count} conversations loaded`);
+    if (count === prevCount && attempt > 2) break;
+    prevCount = count;
+
+    // Scroll the last visible messageListItem into view to trigger lazy loading
+    await page.evaluate(() => {
+      const items = document.querySelectorAll('.messageListItem');
+      const last = items[items.length - 1];
+      if (last) last.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+    await page.waitForTimeout(2000);
+  }
+
   // Scrape conversation list items (Messages section)
   const convLinks = page.locator(S.MESSAGE_CONV_LINK);
   const convCount = await convLinks.count();
-  logger.info(`Found ${convCount} conversations`);
+  logger.info(`Found ${convCount} conversations (after scrolling)`);
 
   for (let i = 0; i < convCount; i++) {
     try {

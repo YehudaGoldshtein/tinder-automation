@@ -1,0 +1,78 @@
+{
+  "matchId": "673a42631bbbae01007255cd68c9808e27eb2c32a46731bd",
+  "conversationUrl": "https://tinder.com/app/messages/673a42631bbbae01007255cd68c9808e27eb2c32a46731bd",
+  "scannedAt": "2026-03-23T17:46:01.672Z",
+  "name": "Natividad",
+  "age": "29",
+  "distance": "6 kilometers away",
+  "bio": "You:Guapa",
+  "lookingFor": "Still figuring it out",
+  "photos": [
+    "https://images-ssl.gotinder.com/68c9808e27eb2c32a46731bd/640x800_a66428b5-8e01-4b9d-b8bf-c83749a5aa26.jpg",
+    "https://images-ssl.gotinder.com/66bec9c668a03a010065a8cf/640x800_4d78700f-4c38-4b29-9070-c3b63fe842ad.jpg",
+    "https://images-ssl.gotinder.com/68efa2e772a9d305558e29b4/640x800_ff4034bf-f4a7-4e22-aa93-c1c6b24c7bc8.jpg",
+    "https://images-ssl.gotinder.com/691c8e6aaa3e797415e52f56/640x800_d85b100b-7521-4f4a-8e78-27a091b0d2a9.jpg",
+    "https://images-ssl.gotinder.com/699146d84a92dbaeb23e2add/640x800_ab8bd4e2-a1be-4f5f-872e-edabe766a744.jpg",
+    "https://images-ssl.gotinder.com/69bf22d1130cf92ef947dfcb/640x800_fd166d35-7d87-440c-8523-5254a59f41d0.jpg",
+    "https://images-ssl.gotinder.com/68cb5a50ecf16930cb8855b3/640x800_d90fbd47-4100-43ca-95b1-be53486fbcf8.jpg",
+    "https://images-ssl.gotinder.com/673a42631bbbae01007255cd/640x800_7e6e7286-d012-492d-9d8e-f222502e9ba5.jpg",
+    "https://images-ssl.gotinder.com/673a42631bbbae01007255cd/640x800_75_91140ee0-6453-47b0-8a10-bc0a06f702c8.webp"
+  ],
+  "essentials": {},
+  "lifestyle": {
+    "Pets": "Dog",
+    "Drinking": "Socially on weekends",
+    "Workout": "Often",
+    "Social Media": "Socially active"
+  },
+  "basics": {
+    "Communication Style": "Big time texter",
+    "Love Style": "Time together",
+    "Education": "Bachelors",
+    "Zodiac": "Virgo"
+  },
+  "interests": [
+    "Cafe hopping",
+    "Movies",
+    "Photography",
+    "Reading",
+    "Pilates"
+  ],
+  "messages": [
+    {
+      "from": "me",
+      "text": "Guapa",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Cómo estás?",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Holaa",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Muy bien y vos??",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Muy profundo lo que escribiste",
+      "time": ""
+    },
+    {
+      "from": "me",
+      "text": "Estoy bien, relajando",
+      "time": ""
+    },
+    {
+      "from": "them",
+      "text": "Que cosa escribi que es profundo? Jajaja",
+      "time": ""
+    }
+  ]
+}
