@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
 import { S } from '../selectors';
 import { Profile } from '../types';
-import { randomDelay, humanDelay } from '../utils/delay';
+import { randomDelay, humanDelay, actionPause, readingDelay } from '../utils/delay';
 import { dismissPopups, dismissMatchPopup } from './popups';
 import config from '../config';
 import logger from '../utils/logger';
@@ -85,10 +85,26 @@ export async function swipeSession(
     const profile = await readCurrentProfile(page);
     if (profile) {
       logger.info(`  ${profile.name}, ${profile.age} - ${profile.bio?.slice(0, 60) || '(no bio)'}`);
+      // Simulate looking at the profile (reading bio, checking photos)
+      if (profile.bio) {
+        await readingDelay(profile.bio);
+      } else {
+        await actionPause(); // 5-12s looking at photos
+      }
+      // Sometimes browse photos (click next photo)
+      if (Math.random() < 0.4) {
+        const photoCount = Math.floor(Math.random() * 3) + 1;
+        for (let p = 0; p < photoCount; p++) {
+          try {
+            await page.locator('[aria-label="Next Photo"]').first().click();
+            await randomDelay(1500, 4000);
+          } catch { break; }
+        }
+      }
     } else {
       logger.warn('  Could not read profile, trying to continue...');
       await dismissPopups(page);
-      await page.waitForTimeout(2000);
+      await actionPause();
     }
 
     // Decide like or pass
@@ -102,14 +118,24 @@ export async function swipeSession(
       if (success) passes++;
     }
 
-    // Delay between swipes
-    await randomDelay(delayBetweenSwipes.min, delayBetweenSwipes.max);
+    // Human-like delay between swipes (5-15 seconds base)
+    await randomDelay(
+      Math.max(delayBetweenSwipes.min, 5000),
+      Math.max(delayBetweenSwipes.max, 15000)
+    );
 
-    // Occasional long pause
+    // Occasional long pause (10% chance, 30-120 seconds)
     if (Math.random() < longPauseChance) {
       const pause = Math.floor(Math.random() * (longPauseRange.max - longPauseRange.min) + longPauseRange.min);
       logger.info(`  Taking a break for ${Math.round(pause / 1000)}s...`);
       await new Promise(r => setTimeout(r, pause));
+    }
+
+    // Very rare "distraction" pause (3% chance, 2-5 minutes — like checking another app)
+    if (Math.random() < 0.03) {
+      const longBreak = Math.floor(120000 + Math.random() * 180000);
+      logger.info(`  Long distraction break for ${Math.round(longBreak / 1000)}s...`);
+      await new Promise(r => setTimeout(r, longBreak));
     }
 
     await dismissPopups(page);

@@ -7,15 +7,15 @@ browser:
     height: 800
 
 swipe:
-  dailyLimit: 80
-  likeRatio: 0.7
+  dailyLimit: 50
+  likeRatio: 0.6
   delayBetweenSwipes:
-    min: 2000
-    max: 6000
-  longPauseChance: 0.05
+    min: 5000
+    max: 15000
+  longPauseChance: 0.10
   longPauseRange:
     min: 30000
-    max: 60000
+    max: 120000
 
 messages:
   openers:

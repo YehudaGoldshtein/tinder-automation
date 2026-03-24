@@ -290,6 +290,35 @@ server.tool('tinder_daily_routine', 'Run the full daily routine (swipe + openers
   return { content: [{ type: 'text', text: 'Daily routine completed!' }] };
 });
 
+server.tool(
+  'tinder_run_js',
+  'Run arbitrary JavaScript on the current Tinder page and return the result',
+  { code: z.string().describe('JavaScript code to evaluate in the browser page') },
+  async ({ code }) => {
+    await ensureBrowser();
+    const page = getPage();
+    try {
+      const result = await page.evaluate(code);
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) || 'done' }] };
+    } catch (e: any) {
+      return { content: [{ type: 'text', text: `Error: ${e.message}` }] };
+    }
+  }
+);
+
+server.tool(
+  'tinder_navigate',
+  'Navigate the browser to a URL',
+  { url: z.string().describe('URL to navigate to') },
+  async ({ url }) => {
+    await ensureBrowser();
+    const page = getPage();
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+    return { content: [{ type: 'text', text: `Navigated to ${page.url()}` }] };
+  }
+);
+
 server.tool('tinder_close', 'Close the browser', {}, async () => {
   await closeBrowser();
   browserReady = false;
