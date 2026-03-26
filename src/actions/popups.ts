@@ -1,5 +1,6 @@
 import { Page } from 'playwright';
 import { S } from '../selectors';
+import { randomize } from '../utils/delay';
 import logger from '../utils/logger';
 
 /** Try to dismiss any popups/modals that Tinder throws at us */
@@ -13,7 +14,7 @@ export async function dismissPopups(page: Page): Promise<void> {
       if (await acceptBtn.isVisible({ timeout: 500 })) {
         await acceptBtn.click();
         logger.info('Dismissed Privacy Preferences dialog');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(randomize(500));
       }
     }
   } catch { /* not visible */ }
@@ -32,7 +33,7 @@ export async function dismissPopups(page: Page): Promise<void> {
         await btn.click();
         logger.info(`Dismissed popup: ${selector}`);
         // Wait a beat, then check for more popups
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(randomize(500));
       }
     } catch {
       // Not visible, move on

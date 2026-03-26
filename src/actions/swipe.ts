@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
 import { S } from '../selectors';
 import { Profile } from '../types';
-import { randomDelay, humanDelay, actionPause, readingDelay } from '../utils/delay';
+import { randomDelay, humanDelay, actionPause, readingDelay, randomize } from '../utils/delay';
 import { dismissPopups, dismissMatchPopup } from './popups';
 import config from '../config';
 import logger from '../utils/logger';
@@ -76,7 +76,7 @@ export async function swipeSession(
 
   // Navigate to recs
   await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(randomize(3000));
   await dismissPopups(page);
 
   for (let i = 0; i < count; i++) {
@@ -97,7 +97,7 @@ export async function swipeSession(
         for (let p = 0; p < photoCount; p++) {
           try {
             await page.locator('[aria-label="Next Photo"]').first().click();
-            await randomDelay(1500, 4000);
+            await randomDelay(randomize(1500, 0.3), randomize(4000, 0.3));
           } catch { break; }
         }
       }
@@ -118,10 +118,10 @@ export async function swipeSession(
       if (success) passes++;
     }
 
-    // Human-like delay between swipes (5-15 seconds base)
+    // Human-like delay between swipes (5-15 seconds base, randomized)
     await randomDelay(
-      Math.max(delayBetweenSwipes.min, 5000),
-      Math.max(delayBetweenSwipes.max, 15000)
+      randomize(Math.max(delayBetweenSwipes.min, 5000), 0.3),
+      randomize(Math.max(delayBetweenSwipes.max, 15000), 0.3)
     );
 
     // Occasional long pause (10% chance, 30-120 seconds)

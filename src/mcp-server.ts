@@ -1,50 +1,107 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { launchBrowser, closeBrowser, getPage } from './browser';
+import { launchBrowser, closeBrowser, getPage, isBrowserAlive } from './browser';
 import { isLoggedIn, waitForManualLogin } from './actions/auth';
 import { dismissPopups } from './actions/popups';
 import { readCurrentProfile, swipeRight, swipeLeft, swipeSession } from './actions/swipe';
-import { getMatches, openMatchById } from './actions/matches';
+import { getMatches, openMatchById, resolveMatch } from './actions/matches';
 import { readMessages, sendMessage } from './actions/messages';
 import { sendOpeners, sendFollowUps } from './actions/opener';
 import { scanProfile } from './actions/profile-scan';
 import { getConversationsSince } from './actions/conversation-list';
 import { runDailyRoutine } from './routines/daily';
+import { randomize } from './utils/delay';
 import logger from './utils/logger';
+
+const DEFAULT_TIMEOUT_MS = 60000;
+
+/** Strip unpaired UTF-16 surrogates that break JSON serialization */
+function sanitize(text: string): string {
+  // eslint-disable-next-line no-control-regex
+  return text.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+}
+
+type ToolResult = { content: { type: 'text'; text: string }[] };
+
+/** Wrap a tool handler with timeout + logging */
+function withTimeout(
+  toolName: string,
+  fn: () => Promise<ToolResult>,
+  timeoutMs: number
+): Promise<ToolResult> {
+  const start = Date.now();
+  logger.info(`[${toolName}] START (timeout: ${timeoutMs}ms)`);
+
+  const work = fn().then(result => {
+    const elapsed = Date.now() - start;
+    const preview = result.content[0]?.text?.slice(0, 100) || '';
+    logger.info(`[${toolName}] OK (${elapsed}ms) ${preview}`);
+    return result;
+  });
+
+  const timeout = new Promise<ToolResult>((resolve) => {
+    setTimeout(() => {
+      const elapsed = Date.now() - start;
+      const msg = `[${toolName}] TIMEOUT after ${elapsed}ms`;
+      logger.error(msg);
+      resolve({ content: [{ type: 'text', text: `Error: ${toolName} timed out after ${timeoutMs}ms` }] });
+    }, timeoutMs);
+  });
+
+  return Promise.race([work, timeout]).catch(err => {
+    const elapsed = Date.now() - start;
+    const msg = `[${toolName}] ERROR (${elapsed}ms): ${err?.message || err}`;
+    logger.error(msg);
+    return { content: [{ type: 'text', text: `Error in ${toolName}: ${err?.message || err}` }] };
+  });
+}
 
 let browserReady = false;
 
 async function ensureBrowser(): Promise<void> {
-  if (!browserReady) {
+  if (!browserReady || !isBrowserAlive()) {
+    logger.info('Browser not running, launching...');
     await launchBrowser(false);
     browserReady = true;
+    logger.info('Browser launched successfully');
   }
 }
 
 const server = new McpServer({
   name: 'tinder-auto',
-  version: '1.0.0',
+  version: '1.1.0',
 });
+
+// Schema fragment reused by every tool
+const timeoutParam = z.number().optional().describe('Timeout in ms (default 60000). Tool returns an error if it takes longer.');
 
 // --- Status / Auth ---
 
-server.tool('tinder_status', 'Check if logged in and browser is running', {}, async () => {
-  await ensureBrowser();
-  const page = getPage();
-  const loggedIn = await isLoggedIn(page);
-  return { content: [{ type: 'text', text: JSON.stringify({ loggedIn, url: page.url() }) }] };
+server.tool('tinder_status', 'Check if logged in and browser is running', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_status', async () => {
+    await ensureBrowser();
+    const page = getPage();
+    const loggedIn = await isLoggedIn(page);
+    logger.info(`[tinder_status] loggedIn=${loggedIn}, url=${page.url()}`);
+    return { content: [{ type: 'text', text: JSON.stringify({ loggedIn, url: page.url() }) }] };
+  }, timeout ?? DEFAULT_TIMEOUT_MS);
 });
 
-server.tool('tinder_login', 'Open browser for manual Tinder login', {}, async () => {
-  await ensureBrowser();
-  const page = getPage();
-  const loggedIn = await isLoggedIn(page);
-  if (loggedIn) {
-    return { content: [{ type: 'text', text: 'Already logged in!' }] };
-  }
-  await waitForManualLogin(page);
-  return { content: [{ type: 'text', text: 'Login successful! Session saved.' }] };
+server.tool('tinder_login', 'Open browser for manual Tinder login', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_login', async () => {
+    await ensureBrowser();
+    const page = getPage();
+    const loggedIn = await isLoggedIn(page);
+    if (loggedIn) {
+      logger.info('[tinder_login] Already logged in');
+      return { content: [{ type: 'text', text: 'Already logged in!' }] };
+    }
+    logger.info('[tinder_login] Waiting for manual login...');
+    await waitForManualLogin(page);
+    logger.info('[tinder_login] Login successful');
+    return { content: [{ type: 'text', text: 'Login successful! Session saved.' }] };
+  }, timeout ?? 300000); // login gets 5 min default
 });
 
 // --- Swiping ---
@@ -52,79 +109,102 @@ server.tool('tinder_login', 'Open browser for manual Tinder login', {}, async ()
 server.tool(
   'tinder_get_profile',
   'Read the current profile on the swipe stack (name, age, bio, distance)',
-  {},
-  async () => {
-    await ensureBrowser();
-    const page = getPage();
-    await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(3000);
-    await dismissPopups(page);
-    const profile = await readCurrentProfile(page);
-    return {
-      content: [{ type: 'text', text: profile ? JSON.stringify(profile) : 'Could not read profile' }],
-    };
+  { timeout: timeoutParam },
+  async ({ timeout }) => {
+    return withTimeout('tinder_get_profile', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info('[tinder_get_profile] Navigating to recs...');
+      await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(randomize(3000));
+      await dismissPopups(page);
+      const profile = await readCurrentProfile(page);
+      logger.info(`[tinder_get_profile] Read: ${profile?.name || '(none)'}`);
+      return {
+        content: [{ type: 'text', text: sanitize(profile ? JSON.stringify(profile) : 'Could not read profile') }],
+      };
+    }, timeout ?? DEFAULT_TIMEOUT_MS);
   }
 );
 
-server.tool('tinder_like', 'Like (swipe right) the current profile', {}, async () => {
-  await ensureBrowser();
-  const page = getPage();
-  const profile = await readCurrentProfile(page);
-  const success = await swipeRight(page);
-  return {
-    content: [{
-      type: 'text',
-      text: success
-        ? `Liked ${profile?.name || 'unknown'}`
-        : 'Failed to like',
-    }],
-  };
+server.tool('tinder_like', 'Like (swipe right) the current profile', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_like', async () => {
+    await ensureBrowser();
+    const page = getPage();
+    const profile = await readCurrentProfile(page);
+    logger.info(`[tinder_like] Liking ${profile?.name || 'unknown'}...`);
+    const success = await swipeRight(page);
+    logger.info(`[tinder_like] ${success ? 'OK' : 'FAILED'}`);
+    return {
+      content: [{
+        type: 'text',
+        text: success
+          ? `Liked ${profile?.name || 'unknown'}`
+          : 'Failed to like',
+      }],
+    };
+  }, timeout ?? DEFAULT_TIMEOUT_MS);
 });
 
-server.tool('tinder_pass', 'Pass (swipe left) on the current profile', {}, async () => {
-  await ensureBrowser();
-  const page = getPage();
-  const profile = await readCurrentProfile(page);
-  const success = await swipeLeft(page);
-  return {
-    content: [{
-      type: 'text',
-      text: success
-        ? `Passed on ${profile?.name || 'unknown'}`
-        : 'Failed to pass',
-    }],
-  };
+server.tool('tinder_pass', 'Pass (swipe left) on the current profile', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_pass', async () => {
+    await ensureBrowser();
+    const page = getPage();
+    const profile = await readCurrentProfile(page);
+    logger.info(`[tinder_pass] Passing on ${profile?.name || 'unknown'}...`);
+    const success = await swipeLeft(page);
+    logger.info(`[tinder_pass] ${success ? 'OK' : 'FAILED'}`);
+    return {
+      content: [{
+        type: 'text',
+        text: success
+          ? `Passed on ${profile?.name || 'unknown'}`
+          : 'Failed to pass',
+      }],
+    };
+  }, timeout ?? DEFAULT_TIMEOUT_MS);
 });
 
 server.tool(
   'tinder_swipe_session',
   'Run an automated swiping session for N profiles',
-  { count: z.number().describe('Number of profiles to swipe through') },
-  async ({ count }) => {
-    await ensureBrowser();
-    const page = getPage();
-    const result = await swipeSession(page, count);
-    return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+  {
+    count: z.number().describe('Number of profiles to swipe through'),
+    timeout: timeoutParam,
+  },
+  async ({ count, timeout }) => {
+    return withTimeout('tinder_swipe_session', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_swipe_session] Starting session for ${count} profiles`);
+      const result = await swipeSession(page, count);
+      logger.info(`[tinder_swipe_session] Done: ${JSON.stringify(result)}`);
+      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+    }, timeout ?? 600000); // swipe sessions can be long
   }
 );
 
 // --- Matches ---
 
-server.tool('tinder_get_matches', 'Get list of all matches and conversations', {}, async () => {
-  await ensureBrowser();
-  const page = getPage();
-  const matches = await getMatches(page);
-  const summary = matches.map((m, i) => {
-    const tag = m.isNew ? ' [NEW]' : '';
-    const preview = m.lastMessage ? ` — "${m.lastMessage.slice(0, 60)}"` : '';
-    return `${i + 1}. ${m.name}${tag}${preview}`;
-  });
-  return {
-    content: [{
-      type: 'text',
-      text: `${matches.length} matches:\n${summary.join('\n')}`,
-    }],
-  };
+server.tool('tinder_get_matches', 'Get list of all matches and conversations', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_get_matches', async () => {
+    await ensureBrowser();
+    const page = getPage();
+    logger.info('[tinder_get_matches] Fetching matches...');
+    const matches = await getMatches(page);
+    logger.info(`[tinder_get_matches] Found ${matches.length} matches`);
+    const summary = matches.map((m, i) => {
+      const tag = m.isNew ? ' [NEW]' : '';
+      const preview = m.lastMessage ? ` — "${m.lastMessage.slice(0, 60)}"` : '';
+      return `${i + 1}. ${m.name}${tag}${preview}`;
+    });
+    return {
+      content: [{
+        type: 'text',
+        text: sanitize(`${matches.length} matches:\n${summary.join('\n')}`),
+      }],
+    };
+  }, timeout ?? 120000); // matches involves scrolling
 });
 
 // --- Messages ---
@@ -132,28 +212,37 @@ server.tool('tinder_get_matches', 'Get list of all matches and conversations', {
 server.tool(
   'tinder_read_messages',
   'Read messages in a conversation with a match',
-  { name: z.string().describe('Name of the match to read messages from') },
-  async ({ name }) => {
-    await ensureBrowser();
-    const page = getPage();
-    const matches = await getMatches(page);
-    const match = matches.find(m => m.name.toLowerCase() === name.toLowerCase());
-    if (!match) {
-      return { content: [{ type: 'text', text: `Match "${name}" not found` }] };
-    }
-    await openMatchById(page, match.id);
-    await page.waitForTimeout(2000);
-    await dismissPopups(page);
-    const messages = await readMessages(page);
-    const formatted = messages.map(m => `${m.from === 'me' ? 'YOU' : 'THEM'}: ${m.text}`);
-    return {
-      content: [{
-        type: 'text',
-        text: formatted.length > 0
-          ? `Conversation with ${match.name}:\n${formatted.join('\n')}`
-          : `No messages yet with ${match.name}`,
-      }],
-    };
+  {
+    name: z.string().optional().describe('Name of the match (not needed if matchId provided)'),
+    matchId: z.string().optional().describe('Direct match ID — skips slow match list scan'),
+    timeout: timeoutParam,
+  },
+  async ({ name, matchId, timeout }) => {
+    return withTimeout('tinder_read_messages', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_read_messages] Looking for match name="${name}" matchId="${matchId}"...`);
+      const match = await resolveMatch(page, name, matchId);
+      if (!match) {
+        logger.warn(`[tinder_read_messages] Match not found`);
+        return { content: [{ type: 'text', text: `Match not found (name="${name}", matchId="${matchId}")` }] };
+      }
+      logger.info(`[tinder_read_messages] Opening conversation with ${match.name} (${match.id})`);
+      await openMatchById(page, match.id);
+      await page.waitForTimeout(randomize(2000));
+      await dismissPopups(page);
+      const messages = await readMessages(page);
+      logger.info(`[tinder_read_messages] Read ${messages.length} messages from ${match.name}`);
+      const formatted = messages.map(m => `${m.from === 'me' ? 'YOU' : 'THEM'}: ${m.text}`);
+      return {
+        content: [{
+          type: 'text',
+          text: sanitize(formatted.length > 0
+            ? `Conversation with ${match.name}:\n${formatted.join('\n')}`
+            : `No messages yet with ${match.name}`),
+        }],
+      };
+    }, timeout ?? 120000);
   }
 );
 
@@ -161,29 +250,35 @@ server.tool(
   'tinder_send_message',
   'Send a message to a match',
   {
-    name: z.string().describe('Name of the match to message'),
+    name: z.string().optional().describe('Name of the match (not needed if matchId provided)'),
+    matchId: z.string().optional().describe('Direct match ID — skips slow match list scan'),
     message: z.string().describe('The message to send'),
+    timeout: timeoutParam,
   },
-  async ({ name, message }) => {
-    await ensureBrowser();
-    const page = getPage();
-    const matches = await getMatches(page);
-    const match = matches.find(m => m.name.toLowerCase() === name.toLowerCase());
-    if (!match) {
-      return { content: [{ type: 'text', text: `Match "${name}" not found` }] };
-    }
-    await openMatchById(page, match.id);
-    await page.waitForTimeout(2000);
-    await dismissPopups(page);
-    const success = await sendMessage(page, message);
-    return {
-      content: [{
-        type: 'text',
-        text: success
-          ? `Message sent to ${match.name}: "${message}"`
-          : `Failed to send message to ${match.name}`,
-      }],
-    };
+  async ({ name, matchId, message, timeout }) => {
+    return withTimeout('tinder_send_message', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_send_message] Sending to name="${name}" matchId="${matchId}": "${message.slice(0, 50)}"`);
+      const match = await resolveMatch(page, name, matchId);
+      if (!match) {
+        logger.warn(`[tinder_send_message] Match not found`);
+        return { content: [{ type: 'text', text: `Match not found (name="${name}", matchId="${matchId}")` }] };
+      }
+      await openMatchById(page, match.id);
+      await page.waitForTimeout(randomize(2000));
+      await dismissPopups(page);
+      const success = await sendMessage(page, message);
+      logger.info(`[tinder_send_message] ${success ? 'Sent' : 'FAILED'} to ${match.name}`);
+      return {
+        content: [{
+          type: 'text',
+          text: success
+            ? `Message sent to ${match.name}: "${message}"`
+            : `Failed to send message to ${match.name}`,
+        }],
+      };
+    }, timeout ?? 120000);
   }
 );
 
@@ -192,60 +287,68 @@ server.tool(
 server.tool(
   'tinder_scan_profile',
   'Full profile scan: photos, bio, interests, lifestyle, basics, looking for, and all messages with a match',
-  { name: z.string().describe('Name of the match to scan') },
-  async ({ name }) => {
-    await ensureBrowser();
-    const page = getPage();
-    const matches = await getMatches(page);
-    const match = matches.find(m => m.name.toLowerCase() === name.toLowerCase());
-    if (!match) {
-      return { content: [{ type: 'text', text: `Match "${name}" not found` }] };
-    }
-    await openMatchById(page, match.id);
-    await page.waitForTimeout(2000);
-    await dismissPopups(page);
-    const profile = await scanProfile(page);
+  {
+    name: z.string().optional().describe('Name of the match (not needed if matchId provided)'),
+    matchId: z.string().optional().describe('Direct match ID — skips slow match list scan'),
+    timeout: timeoutParam,
+  },
+  async ({ name, matchId, timeout }) => {
+    return withTimeout('tinder_scan_profile', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_scan_profile] Scanning name="${name}" matchId="${matchId}"...`);
+      const match = await resolveMatch(page, name, matchId);
+      if (!match) {
+        logger.warn(`[tinder_scan_profile] Match not found`);
+        return { content: [{ type: 'text', text: `Match not found (name="${name}", matchId="${matchId}")` }] };
+      }
+      await openMatchById(page, match.id);
+      await page.waitForTimeout(randomize(2000));
+      await dismissPopups(page);
+      const profile = await scanProfile(page);
+      logger.info(`[tinder_scan_profile] Scanned ${profile.name || name}: ${profile.photos.length} photos, ${profile.messages.length} messages`);
 
-    // Format output
-    const lines: string[] = [];
-    lines.push(`=== ${profile.name || name}, ${profile.age} ===`);
-    if (profile.distance) lines.push(`Distance: ${profile.distance}`);
-    if (profile.bio) lines.push(`Bio: ${profile.bio}`);
-    if (profile.lookingFor) lines.push(`Looking for: ${profile.lookingFor}`);
+      // Format output
+      const lines: string[] = [];
+      lines.push(`=== ${profile.name || name}, ${profile.age} ===`);
+      if (profile.distance) lines.push(`Distance: ${profile.distance}`);
+      if (profile.bio) lines.push(`Bio: ${profile.bio}`);
+      if (profile.lookingFor) lines.push(`Looking for: ${profile.lookingFor}`);
 
-    if (profile.photos.length > 0) {
-      lines.push(`\nPhotos (${profile.photos.length}):`);
-      profile.photos.forEach((p, i) => lines.push(`  ${i + 1}. ${p}`));
-    }
+      if (profile.photos.length > 0) {
+        lines.push(`\nPhotos (${profile.photos.length}):`);
+        profile.photos.forEach((p, i) => lines.push(`  ${i + 1}. ${p}`));
+      }
 
-    if (Object.keys(profile.essentials).length > 0) {
-      lines.push('\nEssentials:');
-      for (const [k, v] of Object.entries(profile.essentials)) lines.push(`  ${k}: ${v}`);
-    }
-    if (Object.keys(profile.lifestyle).length > 0) {
-      lines.push('\nLifestyle:');
-      for (const [k, v] of Object.entries(profile.lifestyle)) lines.push(`  ${k}: ${v}`);
-    }
-    if (Object.keys(profile.basics).length > 0) {
-      lines.push('\nBasics:');
-      for (const [k, v] of Object.entries(profile.basics)) lines.push(`  ${k}: ${v}`);
-    }
-    if (profile.interests.length > 0) {
-      lines.push(`\nInterests: ${profile.interests.join(', ')}`);
-    }
+      if (Object.keys(profile.essentials).length > 0) {
+        lines.push('\nEssentials:');
+        for (const [k, v] of Object.entries(profile.essentials)) lines.push(`  ${k}: ${v}`);
+      }
+      if (Object.keys(profile.lifestyle).length > 0) {
+        lines.push('\nLifestyle:');
+        for (const [k, v] of Object.entries(profile.lifestyle)) lines.push(`  ${k}: ${v}`);
+      }
+      if (Object.keys(profile.basics).length > 0) {
+        lines.push('\nBasics:');
+        for (const [k, v] of Object.entries(profile.basics)) lines.push(`  ${k}: ${v}`);
+      }
+      if (profile.interests.length > 0) {
+        lines.push(`\nInterests: ${profile.interests.join(', ')}`);
+      }
 
-    if (profile.messages.length > 0) {
-      lines.push(`\nMessages (${profile.messages.length}):`);
-      profile.messages.forEach(m => {
-        const who = m.from === 'me' ? 'YOU' : 'THEM';
-        const time = m.time ? ` [${m.time}]` : '';
-        lines.push(`  ${who}${time}: ${m.text}`);
-      });
-    } else {
-      lines.push('\nNo messages yet.');
-    }
+      if (profile.messages.length > 0) {
+        lines.push(`\nMessages (${profile.messages.length}):`);
+        profile.messages.forEach(m => {
+          const who = m.from === 'me' ? 'YOU' : 'THEM';
+          const time = m.time ? ` [${m.time}]` : '';
+          lines.push(`  ${who}${time}: ${m.text}`);
+        });
+      } else {
+        lines.push('\nNo messages yet.');
+      }
 
-    return { content: [{ type: 'text', text: lines.join('\n') }] };
+      return { content: [{ type: 'text', text: sanitize(lines.join('\n')) }] };
+    }, timeout ?? 120000);
   }
 );
 
@@ -254,82 +357,121 @@ server.tool(
 server.tool(
   'tinder_conversations_since',
   'Get list of all conversations with profile/conversation URLs since a given date. Returns name, matchId, URLs, last message, date, and sender.',
-  { since: z.string().optional().describe('ISO date string (e.g. "2026-03-01"). If omitted, returns all conversations.') },
-  async ({ since }) => {
-    await ensureBrowser();
-    const page = getPage();
-    const convs = await getConversationsSince(page, since);
+  {
+    since: z.string().optional().describe('ISO datetime string (e.g. "2026-03-01" or "2026-03-25T14:30"). Supports minute-level precision. If omitted, returns all conversations.'),
+    timeout: timeoutParam,
+  },
+  async ({ since, timeout }) => {
+    return withTimeout('tinder_conversations_since', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_conversations_since] Fetching convos${since ? ` since ${since}` : ''}...`);
+      const convs = await getConversationsSince(page, since);
+      logger.info(`[tinder_conversations_since] Found ${convs.length} conversations`);
 
-    const lines = convs.map((c, i) => {
-      const from = c.lastMessageFrom === 'me' ? '(you)' : c.lastMessageFrom === 'them' ? '(them)' : '';
-      return `${i + 1}. ${c.name} ${c.lastMessageDate ? `[${c.lastMessageDate}]` : ''} ${from}\n   Last: "${c.lastMessage.slice(0, 60)}"\n   URL: ${c.conversationUrl}`;
-    });
+      const lines = convs.map((c, i) => {
+        const from = c.lastMessageFrom === 'me' ? '(you)' : c.lastMessageFrom === 'them' ? '(them)' : '';
+        return `${i + 1}. ${c.name} ${c.lastMessageDate ? `[${c.lastMessageDate}]` : ''} ${from}\n   Last: "${c.lastMessage.slice(0, 60)}"\n   URL: ${c.conversationUrl}`;
+      });
 
-    return {
-      content: [{
-        type: 'text',
-        text: `${convs.length} conversations${since ? ` since ${since}` : ''}:\n\n${lines.join('\n\n')}`,
-      }],
-    };
+      return {
+        content: [{
+          type: 'text',
+          text: sanitize(`${convs.length} conversations${since ? ` since ${since}` : ''}:\n\n${lines.join('\n\n')}`),
+        }],
+      };
+    }, timeout ?? 300000); // can be slow — opens each convo
   }
 );
 
 // --- Auto routines ---
 
-server.tool('tinder_send_openers', 'Send opener messages to new uncontacted matches', {}, async () => {
-  await ensureBrowser();
-  const page = getPage();
-  const count = await sendOpeners(page);
-  return { content: [{ type: 'text', text: `Sent ${count} opener messages` }] };
+server.tool('tinder_send_openers', 'Send opener messages to new uncontacted matches', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_send_openers', async () => {
+    await ensureBrowser();
+    const page = getPage();
+    logger.info('[tinder_send_openers] Starting...');
+    const count = await sendOpeners(page);
+    logger.info(`[tinder_send_openers] Sent ${count} openers`);
+    return { content: [{ type: 'text', text: `Sent ${count} opener messages` }] };
+  }, timeout ?? 300000);
 });
 
-server.tool('tinder_daily_routine', 'Run the full daily routine (swipe + openers + follow-ups)', {}, async () => {
-  await ensureBrowser();
-  const page = getPage();
-  await runDailyRoutine(page);
-  return { content: [{ type: 'text', text: 'Daily routine completed!' }] };
+server.tool('tinder_daily_routine', 'Run the full daily routine (swipe + openers + follow-ups)', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_daily_routine', async () => {
+    await ensureBrowser();
+    const page = getPage();
+    logger.info('[tinder_daily_routine] Starting full daily routine...');
+    await runDailyRoutine(page);
+    logger.info('[tinder_daily_routine] Complete');
+    return { content: [{ type: 'text', text: 'Daily routine completed!' }] };
+  }, timeout ?? 600000); // daily routine can take 10 min
 });
 
 server.tool(
   'tinder_run_js',
   'Run arbitrary JavaScript on the current Tinder page and return the result',
-  { code: z.string().describe('JavaScript code to evaluate in the browser page') },
-  async ({ code }) => {
-    await ensureBrowser();
-    const page = getPage();
-    try {
-      const result = await page.evaluate(code);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) || 'done' }] };
-    } catch (e: any) {
-      return { content: [{ type: 'text', text: `Error: ${e.message}` }] };
-    }
+  {
+    code: z.string().describe('JavaScript code to evaluate in the browser page'),
+    timeout: timeoutParam,
+  },
+  async ({ code, timeout }) => {
+    return withTimeout('tinder_run_js', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_run_js] Evaluating: ${code.slice(0, 80)}...`);
+      try {
+        const result = await page.evaluate(code);
+        logger.info(`[tinder_run_js] Result: ${JSON.stringify(result)?.slice(0, 100)}`);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) || 'done' }] };
+      } catch (e: any) {
+        logger.error(`[tinder_run_js] Error: ${e.message}`);
+        return { content: [{ type: 'text', text: `Error: ${e.message}` }] };
+      }
+    }, timeout ?? DEFAULT_TIMEOUT_MS);
   }
 );
 
 server.tool(
   'tinder_navigate',
   'Navigate the browser to a URL',
-  { url: z.string().describe('URL to navigate to') },
-  async ({ url }) => {
-    await ensureBrowser();
-    const page = getPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2000);
-    return { content: [{ type: 'text', text: `Navigated to ${page.url()}` }] };
+  {
+    url: z.string().describe('URL to navigate to'),
+    timeout: timeoutParam,
+  },
+  async ({ url, timeout }) => {
+    return withTimeout('tinder_navigate', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_navigate] Going to ${url}`);
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(randomize(2000));
+      logger.info(`[tinder_navigate] Arrived at ${page.url()}`);
+      return { content: [{ type: 'text', text: `Navigated to ${page.url()}` }] };
+    }, timeout ?? DEFAULT_TIMEOUT_MS);
   }
 );
 
-server.tool('tinder_close', 'Close the browser', {}, async () => {
-  await closeBrowser();
-  browserReady = false;
-  return { content: [{ type: 'text', text: 'Browser closed' }] };
+server.tool('tinder_close', 'Close the browser', { timeout: timeoutParam }, async ({ timeout }) => {
+  return withTimeout('tinder_close', async () => {
+    logger.info('[tinder_close] Closing browser...');
+    await closeBrowser();
+    browserReady = false;
+    logger.info('[tinder_close] Browser closed');
+    return { content: [{ type: 'text', text: 'Browser closed' }] };
+  }, timeout ?? DEFAULT_TIMEOUT_MS);
 });
 
 // Start server
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  logger.info('Tinder MCP server running on stdio');
+  logger.info('Tinder MCP server v1.1.0 running on stdio');
+  logger.info(`Log file: ${process.env.TINDER_LOG_FILE || 'see config.yaml logging.file'}`);
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  logger.error(`Fatal: ${err.message || err}`);
+  console.error(err);
+  process.exit(1);
+});

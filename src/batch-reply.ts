@@ -3,7 +3,7 @@ import { isLoggedIn } from './actions/auth';
 import { openMatchById } from './actions/matches';
 import { dismissPopups } from './actions/popups';
 import { sendMessage } from './actions/messages';
-import { randomDelay } from './utils/delay';
+import { randomDelay, randomize } from './utils/delay';
 import logger from './utils/logger';
 
 interface PlannedReply {
@@ -109,7 +109,7 @@ async function main() {
 
     try {
       await openMatchById(page, reply.matchId);
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(randomize(2000));
       await dismissPopups(page);
 
       const success = await sendMessage(page, reply.message);
@@ -126,7 +126,7 @@ async function main() {
     }
 
     // Random delay between messages (5-15s)
-    await randomDelay(5000, 15000);
+    await randomDelay(randomize(5000, 0.3), randomize(15000, 0.3));
   }
 
   logger.info(`\n=== DONE ===`);

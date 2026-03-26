@@ -2,6 +2,7 @@ import { Page } from 'playwright';
 import { S } from '../selectors';
 import { dismissPopups } from './popups';
 import { readMessages } from './messages';
+import { randomize } from '../utils/delay';
 import logger from '../utils/logger';
 
 export interface ProfileScan {
@@ -35,14 +36,14 @@ async function openProfileFromConversation(page: Page): Promise<boolean> {
     const profileHeader = page.locator('.chatAvatar, [aria-label*="photos"]').first();
     if (await profileHeader.isVisible({ timeout: 2000 })) {
       await profileHeader.click();
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(randomize(2000));
       return true;
     }
     // Fallback: click the name at the top
     const nameHeader = page.locator('.chat a[href*="/app/messages/"]').first();
     if (await nameHeader.isVisible({ timeout: 1000 })) {
       await nameHeader.click();
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(randomize(2000));
       return true;
     }
     return false;
@@ -148,22 +149,30 @@ export async function scanProfile(page: Page): Promise<ProfileScan> {
   await dismissPopups(page);
 
   // 1. Read messages first (while we're in the conversation view)
+  logger.info('[scanProfile] Reading conversation messages...');
   const messages = await getConversationMessages(page);
+  logger.info(`[scanProfile] Got ${messages.length} messages`);
 
   // 2. Open the profile view
+  logger.info('[scanProfile] Opening profile view...');
   const profileOpened = await openProfileFromConversation(page);
+  logger.info(`[scanProfile] Profile opened: ${profileOpened}`);
 
   let profileData: Partial<ProfileScan> = {};
   if (profileOpened) {
     // 3. Scrape profile data
+    logger.info('[scanProfile] Scraping profile data...');
     profileData = await scrapeProfileData(page);
+    logger.info(`[scanProfile] Scraped: ${profileData.name || '(no name)'}, ${profileData.photos?.length || 0} photos`);
 
     // 4. Go back to conversation
     const backBtn = page.locator('[data-testid="profileBackButton"], button[aria-label="Back"]').first();
     if (await backBtn.isVisible({ timeout: 2000 })) {
       await backBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(randomize(1000));
     }
+  } else {
+    logger.warn('[scanProfile] Could not open profile view');
   }
 
   return {

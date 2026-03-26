@@ -2,12 +2,42 @@ import { Page } from 'playwright';
 import { S } from '../selectors';
 import { Match } from '../types';
 import { dismissPopups } from './popups';
+import { randomize } from '../utils/delay';
 import logger from '../utils/logger';
+
+let matchCache: { data: Match[]; timestamp: number } | null = null;
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
+export function getCachedMatches(): Match[] | null {
+  if (matchCache && Date.now() - matchCache.timestamp < CACHE_TTL_MS) {
+    logger.info(`Using cached matches (${matchCache.data.length} matches, age: ${Math.round((Date.now() - matchCache.timestamp) / 1000)}s)`);
+    return matchCache.data;
+  }
+  return null;
+}
+
+export function invalidateMatchCache(): void {
+  matchCache = null;
+}
+
+/** Resolve a match by matchId (instant) or name (uses cache, falls back to full fetch) */
+export async function resolveMatch(page: Page, name?: string, matchId?: string): Promise<Match | null> {
+  if (matchId) {
+    logger.info(`[resolveMatch] Direct matchId: ${matchId}`);
+    return { id: matchId, name: name || 'Unknown', lastMessage: '', lastMessageTime: '', isNew: false, hasOpener: false };
+  }
+  if (!name) return null;
+  const cached = getCachedMatches();
+  const matches = cached || await getMatches(page);
+  const match = matches.find(m => m.name.toLowerCase() === name.toLowerCase()) || null;
+  logger.info(`[resolveMatch] name="${name}" → ${match ? match.id : 'NOT FOUND'}`);
+  return match;
+}
 
 /** Navigate to matches and scrape the list */
 export async function getMatches(page: Page): Promise<Match[]> {
   await page.goto('https://tinder.com/app/matches', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(randomize(3000));
   await dismissPopups(page);
 
   const matches: Match[] = [];
@@ -34,6 +64,9 @@ export async function getMatches(page: Page): Promise<Match[]> {
         isNew: true,
         hasOpener: false,
       });
+
+      // Small pause between reading each match card
+      if (i < newCount - 1) await page.waitForTimeout(randomize(300, 0.4));
     } catch {
       continue;
     }
@@ -43,7 +76,7 @@ export async function getMatches(page: Page): Promise<Match[]> {
   try {
     const messagesTab = page.locator(S.MESSAGES_TAB).first();
     await messagesTab.click({ timeout: 3000 });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(randomize(2000));
   } catch {
     logger.warn('Could not click Messages tab, conversations may not be visible');
   }
@@ -62,7 +95,7 @@ export async function getMatches(page: Page): Promise<Match[]> {
       const last = items[items.length - 1];
       if (last) last.scrollIntoView({ behavior: 'smooth', block: 'end' });
     });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(randomize(2000));
   }
 
   // Scrape conversation list items (Messages section)
@@ -90,11 +123,16 @@ export async function getMatches(page: Page): Promise<Match[]> {
         isNew: false,
         hasOpener: preview.length > 0,
       });
+
+      // Small human-like pause between reading items
+      if (i < convCount - 1) await page.waitForTimeout(randomize(400, 0.4));
     } catch {
       continue;
     }
   }
 
+  matchCache = { data: matches, timestamp: Date.now() };
+  logger.info(`[getMatches] Cache updated with ${matches.length} matches`);
   return matches;
 }
 
@@ -102,7 +140,7 @@ export async function getMatches(page: Page): Promise<Match[]> {
 export async function openMatchById(page: Page, matchId: string): Promise<boolean> {
   try {
     await page.goto(`https://tinder.com/app/messages/${matchId}`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(randomize(2000));
     return true;
   } catch (e) {
     logger.error(`Failed to open match ${matchId}: ${e}`);
@@ -116,7 +154,7 @@ export async function openMatchByIndex(page: Page, index: number): Promise<boole
     const link = page.locator(S.MESSAGE_LIST_ITEM).nth(index);
     await link.click();
     await page.waitForURL(/\/app\/messages\//, { timeout: 5000 });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(randomize(1000));
     return true;
   } catch (e) {
     logger.error(`Failed to open match at index ${index}: ${e}`);

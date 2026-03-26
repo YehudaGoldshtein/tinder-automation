@@ -1,5 +1,6 @@
 import { Page } from 'playwright';
 import { S } from '../selectors';
+import { randomize } from '../utils/delay';
 import logger from '../utils/logger';
 
 const TINDER_APP_URL = 'https://tinder.com/app/recs';
@@ -8,7 +9,7 @@ const TINDER_APP_URL = 'https://tinder.com/app/recs';
 export async function isLoggedIn(page: Page): Promise<boolean> {
   await page.goto(TINDER_APP_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
   // Wait for redirect/load to settle
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(randomize(3000));
 
   // Check if we ended up on an app page (logged in) or login/landing page
   const url = page.url();
@@ -35,7 +36,7 @@ export async function waitForManualLogin(page: Page): Promise<void> {
   await page.goto('https://tinder.com', { waitUntil: 'domcontentloaded' });
 
   // Check if already logged in (auto-redirect to /app/)
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(randomize(3000));
   if (page.url().includes('/app/')) {
     logger.info('Already logged in!');
     return;
