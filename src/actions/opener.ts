@@ -3,7 +3,7 @@ import { getMatches, openMatchById } from './matches';
 import { readMessages, sendMessage } from './messages';
 import { loadState, saveState } from '../data/store';
 import config from '../config';
-import { humanDelay, randomDelay } from '../utils/delay';
+import { humanDelay, randomDelay, randomize } from '../utils/delay';
 import logger from '../utils/logger';
 
 function pickOpener(name: string): string {
@@ -50,7 +50,7 @@ export async function sendOpeners(page: Page): Promise<number> {
       logger.info(`Opener sent to ${match.name}: "${opener}"`);
     }
 
-    await randomDelay(3000, 8000);
+    await randomDelay(randomize(3000, 0.3), randomize(8000, 0.3));
   }
 
   saveState(state);
@@ -81,7 +81,7 @@ export async function sendFollowUps(page: Page): Promise<number> {
     // Last message is from them — they replied! Skip follow up.
     // (In a more advanced version, we'd handle conversation continuation here)
 
-    await randomDelay(2000, 5000);
+    await randomDelay(randomize(2000, 0.3), randomize(5000, 0.3));
   }
 
   logger.info(`Sent ${sent} follow-ups`);

@@ -10,6 +10,7 @@ export async function launchBrowser(headless?: boolean): Promise<{ context: Brow
 
   logger.info(`Launching browser (headless: ${isHeadless})`);
 
+  logger.info(`Using userDataDir: ${config.browser.userDataDir}`);
   context = await chromium.launchPersistentContext(config.browser.userDataDir, {
     headless: isHeadless,
     slowMo: config.browser.slowMo,
@@ -42,6 +43,16 @@ export async function closeBrowser(): Promise<void> {
     context = null;
     page = null;
     logger.info('Browser closed');
+  }
+}
+
+export function isBrowserAlive(): boolean {
+  try {
+    if (!context || !page) return false;
+    // If the browser was closed, context.pages() will throw or return empty
+    return context.pages().length > 0;
+  } catch {
+    return false;
   }
 }
 

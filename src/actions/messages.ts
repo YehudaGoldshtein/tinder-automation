@@ -1,12 +1,13 @@
 import { Page } from 'playwright';
 import { S } from '../selectors';
 import { Message } from '../types';
-import { humanDelay, actionPause, microPause, humanType, readingDelay } from '../utils/delay';
+import { humanDelay, actionPause, microPause, humanType, readingDelay, randomize } from '../utils/delay';
 import logger from '../utils/logger';
 
 /** Read messages in the currently open conversation */
 export async function readMessages(page: Page): Promise<Message[]> {
   const messages: Message[] = [];
+  logger.info('[readMessages] Reading messages from current conversation...');
 
   try {
     // Wait for chat to load
@@ -32,16 +33,21 @@ export async function readMessages(page: Page): Promise<Message[]> {
         text: text.trim(),
         time: time?.trim() || '',
       });
+
+      // Brief pause between reading each message bubble
+      if (i < count - 1) await page.waitForTimeout(randomize(200, 0.4));
     }
   } catch (e) {
-    logger.error(`Failed to read messages: ${e}`);
+    logger.error(`[readMessages] Failed: ${e}`);
   }
 
+  logger.info(`[readMessages] Read ${messages.length} messages`);
   return messages;
 }
 
 /** Send a message in the currently open conversation */
 export async function sendMessage(page: Page, text: string): Promise<boolean> {
+  logger.info(`[sendMessage] Sending: "${text.slice(0, 50)}${text.length > 50 ? '...' : ''}"`);
   try {
     // Simulate reading the conversation first
     await readingDelay(text);

@@ -5,6 +5,7 @@ import { isLoggedIn } from './actions/auth';
 import { getMatches, openMatchById } from './actions/matches';
 import { dismissPopups } from './actions/popups';
 import { scanProfile } from './actions/profile-scan';
+import { randomize, randomDelay } from './utils/delay';
 import logger from './utils/logger';
 
 const OUTPUT_DIR = path.resolve(__dirname, '..', 'data', 'profiles');
@@ -49,7 +50,7 @@ async function main() {
 
     try {
       await openMatchById(page, match.id);
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(randomize(2000));
       await dismissPopups(page);
 
       const profile = await scanProfile(page);
@@ -72,6 +73,9 @@ async function main() {
       failed++;
       logger.error(`  Failed to scan ${match.name}: ${e}`);
     }
+
+    // Human-like pause between scanning profiles
+    await randomDelay(randomize(2000, 0.3), randomize(5000, 0.3));
   }
 
   // Reload all profiles for combined file

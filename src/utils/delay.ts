@@ -70,6 +70,15 @@ export async function humanType(page: Page, text: string): Promise<void> {
 }
 
 /**
+ * Randomize a duration by adding/removing up to `portion` of it.
+ * e.g. randomize(10000, 0.3) => 7000–13000ms
+ */
+export function randomize(ms: number, portion = 0.25): number {
+  const jitter = ms * portion;
+  return Math.round(ms + (Math.random() * 2 - 1) * jitter);
+}
+
+/**
  * Random jitter for cron-like scheduling.
  * Returns a delay in ms to add to scheduled time (0 to maxJitterMs).
  */

@@ -1,6 +1,7 @@
 import { Page } from 'playwright';
 import { S } from '../selectors';
 import { dismissPopups } from './popups';
+import { randomize } from '../utils/delay';
 import logger from '../utils/logger';
 
 export interface ConversationEntry {
@@ -24,11 +25,11 @@ export async function getConversationsSince(
 ): Promise<ConversationEntry[]> {
   // Navigate to matches, click Messages tab
   await page.goto('https://tinder.com/app/matches', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(randomize(3000));
   await dismissPopups(page);
   await page.click(S.MESSAGES_TAB, { timeout: 5000 });
   await page.waitForSelector(S.MESSAGE_LIST_ITEM, { timeout: 10000 });
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(randomize(1000));
 
   // Scroll to load all conversations
   let prevCount = 0;
@@ -41,7 +42,7 @@ export async function getConversationsSince(
       const list = document.querySelector('.messageList') || document.querySelector('ul[aria-label="Your recent messages"]');
       if (list) list.scrollTop = list.scrollHeight;
     });
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(randomize(1500));
   }
 
   // Extract basic info from all conversations
@@ -78,54 +79,23 @@ export async function getConversationsSince(
     await page.goto(`https://tinder.com/app/messages/${conv.matchId}`, {
       waitUntil: 'domcontentloaded',
     });
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(randomize(1500));
     await dismissPopups(page);
 
-    // Extract the last message date from the chat
-    const dateInfo = await page.evaluate(() => {
-      // Look for date separators or timestamps
-      // Tinder shows date headers like "Today", "Yesterday", "Mon, Mar 20"
-      // and msg__status with "Sent" or time
-      const dateHeaders: string[] = [];
+    // Wait for <time> elements to appear (messages to render)
+    try {
+      await page.waitForSelector('time[datetime]', { timeout: 5000 });
+    } catch { /* no messages in this conversation */ }
 
-      // Date separator elements
-      document.querySelectorAll('[class*="separator"], [class*="date"], [class*="timestamp"]').forEach(el => {
-        const text = el.textContent?.trim();
-        if (text) dateHeaders.push(text);
-      });
-
-      // Also check for any text that looks like a date in the chat area
-      const chatEl = document.querySelector('.chat');
-      if (chatEl) {
-        // Look for standalone date text nodes between messages
-        chatEl.querySelectorAll('div').forEach(div => {
-          const text = div.textContent?.trim() || '';
-          // Match patterns like "Today", "Yesterday", "Mon, Mar 20", "3/20/26"
-          if (/^(Today|Yesterday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(text) && text.length < 30) {
-            dateHeaders.push(text);
-          }
-          if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(text)) {
-            dateHeaders.push(text);
-          }
-        });
-      }
-
-      // Get msg__status texts (they sometimes contain timestamps)
-      const statuses: string[] = [];
-      document.querySelectorAll('.msg__status').forEach(el => {
-        const text = el.textContent?.trim();
-        if (text) statuses.push(text);
-      });
-
-      return { dateHeaders, statuses };
+    // Extract the last message ISO timestamp from <time datetime="..."> elements
+    const lastIso = await page.evaluate(() => {
+      const timeEls = document.querySelectorAll('time[datetime]');
+      if (timeEls.length === 0) return null;
+      // Last <time> element = most recent message
+      return timeEls[timeEls.length - 1].getAttribute('datetime');
     });
 
-    // Try to determine the date of the last message
-    let lastDate = '';
-    const allDates = [...dateInfo.dateHeaders];
-    if (allDates.length > 0) {
-      lastDate = allDates[allDates.length - 1]; // Last date header = most recent
-    }
+    const lastDate = lastIso || '';
 
     const entry: ConversationEntry = {
       name: conv.name,
@@ -137,51 +107,24 @@ export async function getConversationsSince(
       lastMessageFrom: conv.lastMessageFrom as 'me' | 'them' | 'unknown',
     };
 
-    // If we have a since filter, try to parse and compare
+    // If we have a since filter, compare ISO timestamps directly
     if (since && lastDate) {
-      try {
-        const parsed = parseTinderDate(lastDate);
-        if (parsed && parsed < since) {
-          logger.info(`  ${conv.name}: ${lastDate} — before cutoff, stopping`);
-          // Tinder shows conversations in reverse chronological order,
-          // so once we hit one that's too old, we can stop
-          break;
-        }
-      } catch { /* continue if date parsing fails */ }
+      const parsed = new Date(lastDate);
+      if (!isNaN(parsed.getTime()) && parsed < since) {
+        logger.info(`  ${conv.name}: ${lastDate} — before cutoff, stopping`);
+        // Tinder shows conversations in reverse chronological order,
+        // so once we hit one that's too old, we can stop
+        break;
+      }
     }
 
     results.push(entry);
     logger.info(`  ${conv.name}: ${lastDate || '(no date)'} — "${conv.preview.slice(0, 40)}"`);
+
+    // Pause between opening each conversation (like a human browsing)
+    await page.waitForTimeout(randomize(1000, 0.3));
   }
 
   return results;
 }
 
-/** Parse Tinder's date formats into a Date object */
-function parseTinderDate(text: string): Date | null {
-  const now = new Date();
-
-  if (text === 'Today') return now;
-  if (text === 'Yesterday') {
-    const d = new Date(now);
-    d.setDate(d.getDate() - 1);
-    return d;
-  }
-
-  // Try "Mon, Mar 20" format
-  const match = text.match(/(\w+),\s+(\w+)\s+(\d+)/);
-  if (match) {
-    const dateStr = `${match[2]} ${match[3]}, ${now.getFullYear()}`;
-    const parsed = new Date(dateStr);
-    if (!isNaN(parsed.getTime())) return parsed;
-  }
-
-  // Try "3/20/26" format
-  const slashMatch = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
-  if (slashMatch) {
-    const year = slashMatch[3].length === 2 ? 2000 + parseInt(slashMatch[3]) : parseInt(slashMatch[3]);
-    return new Date(year, parseInt(slashMatch[1]) - 1, parseInt(slashMatch[2]));
-  }
-
-  return null;
-}
