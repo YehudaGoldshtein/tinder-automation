@@ -18,13 +18,23 @@ function pickFollowUp(): string {
 }
 
 /** Send openers to uncontacted matches */
-export async function sendOpeners(page: Page): Promise<number> {
+export async function sendOpeners(page: Page, maxAgeHours?: number): Promise<number> {
   const state = loadState();
   const matches = await getMatches(page);
   let sent = 0;
 
   for (let i = 0; i < matches.length && sent < config.messages.maxNewOpeners; i++) {
     const match = matches[i];
+
+    // Skip matches older than maxAgeHours
+    if (maxAgeHours != null && match.matchedAt) {
+      const matchTime = new Date(match.matchedAt).getTime();
+      const cutoff = Date.now() - maxAgeHours * 60 * 60 * 1000;
+      if (matchTime < cutoff) {
+        logger.info(`Skipping ${match.name} — matched ${Math.round((Date.now() - matchTime) / 3600000)}h ago (max ${maxAgeHours}h)`);
+        continue;
+      }
+    }
 
     // Skip already contacted
     if (state.contactedMatches.includes(match.name)) continue;

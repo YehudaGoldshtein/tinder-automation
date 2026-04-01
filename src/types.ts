@@ -38,6 +38,7 @@ export interface Match {
   name: string;
   lastMessage: string;
   lastMessageTime: string;
+  matchedAt: string;
   isNew: boolean;
   hasOpener: boolean;
 }

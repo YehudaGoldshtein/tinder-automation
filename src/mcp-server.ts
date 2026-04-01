@@ -7,7 +7,6 @@ import { dismissPopups } from './actions/popups';
 import { readCurrentProfile, swipeRight, swipeLeft, swipeSession } from './actions/swipe';
 import { getMatches, openMatchById, resolveMatch } from './actions/matches';
 import { readMessages, sendMessage } from './actions/messages';
-import { sendOpeners, sendFollowUps } from './actions/opener';
 import { scanProfile } from './actions/profile-scan';
 import { getConversationsSince } from './actions/conversation-list';
 import { runDailyRoutine } from './routines/daily';
@@ -384,18 +383,72 @@ server.tool(
   }
 );
 
-// --- Auto routines ---
+// --- Untexted matches ---
 
-server.tool('tinder_send_openers', 'Send opener messages to new uncontacted matches', { timeout: timeoutParam }, async ({ timeout }) => {
-  return withTimeout('tinder_send_openers', async () => {
-    await ensureBrowser();
-    const page = getPage();
-    logger.info('[tinder_send_openers] Starting...');
-    const count = await sendOpeners(page);
-    logger.info(`[tinder_send_openers] Sent ${count} openers`);
-    return { content: [{ type: 'text', text: `Sent ${count} opener messages` }] };
-  }, timeout ?? 300000);
-});
+server.tool(
+  'tinder_get_untexted_matches',
+  'Get all matches that have never been texted (no messages in conversation). Returns match info including matchId, name, matchedAt. Use tinder_scan_profile + tinder_send_message to handle each one.',
+  {
+    since: z.string().optional().describe('ISO datetime string (e.g. "2026-03-01" or "2026-03-25T14:30"). If omitted, returns all untexted matches.'),
+    timeout: timeoutParam,
+  },
+  async ({ since, timeout }) => {
+    return withTimeout('tinder_get_untexted_matches', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_get_untexted_matches] Fetching new matches only${since ? ` since ${since}` : ''}...`);
+      const matches = await getMatches(page, { newOnly: true });
+
+      const sinceCutoff = since ? new Date(since).getTime() : null;
+
+      // Pre-filter before expensive per-match verification
+      const candidates = matches.filter(match => {
+        // Already has messages from the match list preview
+        if (match.hasOpener || match.lastMessage) return false;
+
+        // Filter by since date if requested — skip matches older than cutoff
+        if (sinceCutoff != null) {
+          if (!match.matchedAt) return false; // no date info, skip when filtering by date
+          const matchTime = new Date(match.matchedAt).getTime();
+          if (matchTime < sinceCutoff) return false;
+        }
+
+        return true;
+      });
+
+      logger.info(`[tinder_get_untexted_matches] ${candidates.length} candidates to verify out of ${matches.length} total`);
+
+      // Verify each candidate by opening conversation
+      const untexted: typeof matches = [];
+      for (const match of candidates) {
+        if (!(await openMatchById(page, match.id))) continue;
+        await page.waitForTimeout(randomize(1500));
+        const messages = await readMessages(page);
+        if (messages.length === 0) {
+          untexted.push(match);
+        }
+        await page.waitForTimeout(randomize(1000));
+      }
+
+      logger.info(`[tinder_get_untexted_matches] Found ${untexted.length} untexted matches out of ${matches.length} total`);
+
+      const result = untexted.map(m => ({
+        matchId: m.id,
+        name: m.name,
+        matchedAt: m.matchedAt || null,
+      }));
+
+      return {
+        content: [{
+          type: 'text',
+          text: sanitize(JSON.stringify({ count: untexted.length, matches: result }, null, 2)),
+        }],
+      };
+    }, timeout ?? 300000);
+  }
+);
+
+// --- Auto routines ---
 
 server.tool('tinder_daily_routine', 'Run the full daily routine (swipe + openers + follow-ups)', { timeout: timeoutParam }, async ({ timeout }) => {
   return withTimeout('tinder_daily_routine', async () => {
