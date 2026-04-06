@@ -390,14 +390,13 @@ server.tool(
   'Get all matches that have never been texted (no messages in conversation). Returns match info including matchId, name, matchedAt. Use tinder_scan_profile + tinder_send_message to handle each one.',
   {
     since: z.string().optional().describe('ISO datetime string (e.g. "2026-03-01" or "2026-03-25T14:30"). If omitted, returns all untexted matches.'),
-    verify: z.boolean().optional().default(false).describe('If true, open each conversation to confirm zero messages (slow but thorough). Default false — trusts match-list preview data.'),
     timeout: timeoutParam,
   },
-  async ({ since, verify, timeout }) => {
+  async ({ since, timeout }) => {
     return withTimeout('tinder_get_untexted_matches', async () => {
       await ensureBrowser();
       const page = getPage();
-      logger.info(`[tinder_get_untexted_matches] Fetching new matches only${since ? ` since ${since}` : ''} (verify=${verify})...`);
+      logger.info(`[tinder_get_untexted_matches] Fetching new matches only${since ? ` since ${since}` : ''}...`);
       const matches = await getMatches(page, { newOnly: true });
 
       const sinceCutoff = since ? new Date(since).getTime() : null;
@@ -417,25 +416,18 @@ server.tool(
         return true;
       });
 
-      logger.info(`[tinder_get_untexted_matches] ${candidates.length} candidates out of ${matches.length} total`);
+      logger.info(`[tinder_get_untexted_matches] ${candidates.length} candidates to verify out of ${matches.length} total`);
 
-      let untexted: typeof matches;
-
-      if (verify) {
-        // Verify each candidate by opening conversation (slow but thorough)
-        untexted = [];
-        for (const match of candidates) {
-          if (!(await openMatchById(page, match.id))) continue;
-          await page.waitForTimeout(randomize(1500));
-          const messages = await readMessages(page);
-          if (messages.length === 0) {
-            untexted.push(match);
-          }
-          await page.waitForTimeout(randomize(1000));
+      // Verify each candidate by opening conversation
+      const untexted: typeof matches = [];
+      for (const match of candidates) {
+        if (!(await openMatchById(page, match.id))) continue;
+        await page.waitForTimeout(randomize(1500));
+        const messages = await readMessages(page);
+        if (messages.length === 0) {
+          untexted.push(match);
         }
-      } else {
-        // Trust match-list preview data (fast)
-        untexted = candidates;
+        await page.waitForTimeout(randomize(1000));
       }
 
       logger.info(`[tinder_get_untexted_matches] Found ${untexted.length} untexted matches out of ${matches.length} total`);
