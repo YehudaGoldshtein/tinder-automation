@@ -66,15 +66,22 @@ export async function getMatches(page: Page, opts?: { newOnly?: boolean }): Prom
   const newCount = await newMatchItems.count();
   logger.info(`Found ${newCount} new match items`);
 
-  for (let i = 0; i < newCount; i++) {
-    try {
-      const item = newMatchItems.nth(i);
-      const href = await item.getAttribute('href') || '';
+  // Batch DOM extraction — single page.evaluate() instead of sequential Playwright calls
+  if (newCount > 0) {
+    const selector = S.NEW_MATCH_ITEM;
+    const newMatchData = await page.evaluate((sel) => {
+      const items = document.querySelectorAll(sel);
+      return Array.from(items).map((item, i) => {
+        const href = item.getAttribute('href') || '';
+        const photoEl = item.querySelector('[role="img"]');
+        const name = photoEl?.getAttribute('aria-label') || `New Match ${i + 1}`;
+        return { href, name };
+      });
+    }, selector);
+
+    for (const { href, name } of newMatchData) {
       if (!href.includes('/app/messages/')) continue;
       const id = href.replace('/app/messages/', '');
-      const photoEl = item.locator('[role="img"]').first();
-      const name = await photoEl.getAttribute('aria-label') || `New Match ${i + 1}`;
-
       matches.push({
         id,
         name: name.trim(),
@@ -84,11 +91,6 @@ export async function getMatches(page: Page, opts?: { newOnly?: boolean }): Prom
         isNew: true,
         hasOpener: false,
       });
-
-      // Small pause between reading each match card
-      if (i < newCount - 1) await page.waitForTimeout(randomize(300, 0.4));
-    } catch {
-      continue;
     }
   }
 
