@@ -62,34 +62,35 @@ export async function getMatches(page: Page, opts?: { newOnly?: boolean }): Prom
   const matches: Match[] = [];
 
   // First scrape new matches (visible without clicking Messages tab)
-  const newMatchItems = page.locator(S.NEW_MATCH_ITEM);
-  const newCount = await newMatchItems.count();
-  logger.info(`Found ${newCount} new match items`);
-
-  for (let i = 0; i < newCount; i++) {
-    try {
-      const item = newMatchItems.nth(i);
-      const href = await item.getAttribute('href') || '';
-      if (!href.includes('/app/messages/')) continue;
+  // Use a single page.evaluate() to batch-extract all match data in one round-trip
+  // instead of per-element Playwright locator calls (which hang 30s per missing element)
+  const selector = S.NEW_MATCH_ITEM;
+  const rawNewMatches: Array<{ id: string; name: string }> = await page.evaluate((sel) => {
+    const items = document.querySelectorAll(sel);
+    const results: Array<{ id: string; name: string }> = [];
+    items.forEach((el, i) => {
+      const href = (el as HTMLAnchorElement).getAttribute('href') || '';
+      if (!href.includes('/app/messages/')) return;
       const id = href.replace('/app/messages/', '');
-      const photoEl = item.locator('[role="img"]').first();
-      const name = await photoEl.getAttribute('aria-label') || `New Match ${i + 1}`;
+      const photoEl = el.querySelector('[role="img"]');
+      const name = photoEl?.getAttribute('aria-label') || `New Match ${i + 1}`;
+      results.push({ id, name: name.trim() });
+    });
+    return results;
+  }, selector);
 
-      matches.push({
-        id,
-        name: name.trim(),
-        lastMessage: '',
-        lastMessageTime: '',
-        matchedAt: matchDates.get(id) || '',
-        isNew: true,
-        hasOpener: false,
-      });
+  logger.info(`Found ${rawNewMatches.length} new match items`);
 
-      // Small pause between reading each match card
-      if (i < newCount - 1) await page.waitForTimeout(randomize(300, 0.4));
-    } catch {
-      continue;
-    }
+  for (const raw of rawNewMatches) {
+    matches.push({
+      id: raw.id,
+      name: raw.name,
+      lastMessage: '',
+      lastMessageTime: '',
+      matchedAt: matchDates.get(raw.id) || '',
+      isNew: true,
+      hasOpener: false,
+    });
   }
 
   if (!opts?.newOnly) {
