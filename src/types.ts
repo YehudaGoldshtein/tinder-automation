@@ -1,4 +1,8 @@
 export interface Config {
+  user: {
+    name: string;
+    phone: string;
+  };
   browser: {
     headless: boolean;
     userDataDir: string;

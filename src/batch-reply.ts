@@ -5,6 +5,7 @@ import { dismissPopups } from './actions/popups';
 import { sendMessage } from './actions/messages';
 import { randomDelay, randomize } from './utils/delay';
 import logger from './utils/logger';
+import config from './config';
 
 interface PlannedReply {
   name: string;
@@ -87,13 +88,13 @@ const replies: PlannedReply[] = [
     message: 'Te invito cuando quieras! Mándame tu WhatsApp y coordinamos 😊' },
   { name: 'Paty', matchId: '68c9808e27eb2c32a46731bd695f0d589f2d719da791c171',
     category: 'push_wa',
-    message: 'Dale, yo te mando mensaje. Mi número es +972504265054 😊' },
+    message: `Dale, yo te mando mensaje. Mi número es ${config.user.phone} 😊` },
   { name: 'Joa', matchId: '634f3d99466a8c0100d88a8468c9808e27eb2c32a46731bd',
     category: 'push_wa',
     message: 'Jaja verdad, por eso solo uso WhatsApp. Te paso mi número? Así hablamos más fácil' },
   { name: 'Crissh Augus', matchId: '68c9808e27eb2c32a46731bd6943504daa3e79474cf70a62',
     category: 'push_wa',
-    message: 'Dale, mándame tu número y te escribo! O este es el mío: +972504265054' },
+    message: `Dale, mándame tu número y te escribo! O este es el mío: ${config.user.phone}` },
 ];
 
 async function main() {

@@ -1,3 +1,7 @@
+user:
+  name: Yehuda
+  phone: "+972504265054"
+
 browser:
   headless: false
   userDataDir: ./browser-data
