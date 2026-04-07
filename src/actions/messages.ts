@@ -2,6 +2,7 @@ import { Page } from 'playwright';
 import { S } from '../selectors';
 import { Message } from '../types';
 import { humanDelay, actionPause, microPause, humanType, readingDelay, randomize } from '../utils/delay';
+import { sanitizeEmojis } from '../utils/emoji-sanitizer';
 import logger from '../utils/logger';
 
 /** Read messages in the currently open conversation */
@@ -47,6 +48,13 @@ export async function readMessages(page: Page): Promise<Message[]> {
 
 /** Send a message in the currently open conversation */
 export async function sendMessage(page: Page, text: string): Promise<boolean> {
+  // Sanitize emojis: Tinder only supports BMP (U+0000–U+FFFF)
+  const sanitized = sanitizeEmojis(text);
+  if (sanitized !== text) {
+    logger.info(`[sendMessage] Emoji sanitized: "${text.slice(0, 50)}" → "${sanitized.slice(0, 50)}"`);
+  }
+  text = sanitized;
+
   logger.info(`[sendMessage] Sending: "${text.slice(0, 50)}${text.length > 50 ? '...' : ''}"`);
   try {
     // Simulate reading the conversation first
