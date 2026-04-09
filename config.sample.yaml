@@ -1,6 +1,6 @@
 user:
-  name: Yehuda
-  phone: "+972504265054"
+  name: YourName
+  phone: "+1234567890"
 
 browser:
   headless: false
@@ -24,7 +24,7 @@ swipe:
 messages:
   openers:
     - "Hey {{name}}! What's the most spontaneous thing you've done recently?"
-    - "Hi {{name}} 👋 what brings you to Asunción?"
+    - "Hi {{name}} 👋 what brings you here?"
     - "{{name}}! Coffee or cocktails for a first meetup?"
   followUp:
     staleAfterHours: 48

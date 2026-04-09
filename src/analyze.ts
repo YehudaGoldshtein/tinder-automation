@@ -50,7 +50,7 @@ interface LabeledConversation {
 }
 
 function extractPhoneNumber(text: string): string {
-  // Match patterns like +595972929100, 0983814271, +54 9 3718 44 5353, +972504265054
+  // Match patterns like +595972929100, 0983814271, +54 9 3718 44 5353
   const patterns = [
     /(\+\d{1,3}\s?\d[\d\s-]{7,})/,
     /(0\d{9,})/,

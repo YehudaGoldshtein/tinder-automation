@@ -3,6 +3,7 @@ dist/
 browser-data/
 logs/
 data/
+config.yaml
 .env
 *.html
 *.txt
