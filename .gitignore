@@ -2,7 +2,7 @@ node_modules/
 dist/
 browser-data/
 logs/
-data/state.json
+data/
 .env
 *.html
 *.txt
