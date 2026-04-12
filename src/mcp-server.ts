@@ -4,11 +4,12 @@ import { z } from 'zod';
 import { launchBrowser, closeBrowser, getPage, isBrowserAlive } from './browser';
 import { isLoggedIn, waitForManualLogin } from './actions/auth';
 import { dismissPopups } from './actions/popups';
-import { readCurrentProfile, swipeRight, swipeLeft, swipeSession } from './actions/swipe';
+import { readCurrentProfile, swipeRight, swipeLeft, swipeSession, swipeBlindly } from './actions/swipe';
 import { getMatches, openMatchById, resolveMatch } from './actions/matches';
 import { readMessages, sendMessage } from './actions/messages';
 import { scanProfile } from './actions/profile-scan';
 import { getConversationsSince } from './actions/conversation-list';
+import { getExploreCategories, sweepExploreCategories } from './actions/explore';
 import { runDailyRoutine } from './routines/daily';
 import { randomize } from './utils/delay';
 import logger from './utils/logger';
@@ -113,9 +114,13 @@ server.tool(
     return withTimeout('tinder_get_profile', async () => {
       await ensureBrowser();
       const page = getPage();
-      logger.info('[tinder_get_profile] Navigating to recs...');
-      await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(randomize(3000));
+      const url = page.url();
+      const onSwipePage = url.includes('/app/recs') || url.includes('/app/explore');
+      if (!onSwipePage) {
+        logger.info('[tinder_get_profile] Navigating to recs...');
+        await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(randomize(3000));
+      }
       await dismissPopups(page);
       const profile = await readCurrentProfile(page);
       logger.info(`[tinder_get_profile] Read: ${profile?.name || '(none)'}`);
@@ -180,6 +185,46 @@ server.tool(
       logger.info(`[tinder_swipe_session] Done: ${JSON.stringify(result)}`);
       return { content: [{ type: 'text', text: JSON.stringify(result) }] };
     }, timeout ?? 600000); // swipe sessions can be long
+  }
+);
+
+server.tool(
+  'tinder_swipe_blindly',
+  'Swipe rapidly without reading profiles. Works on recs or explore category pages. count=-1 swipes until out of profiles.',
+  {
+    count: z.number().describe('Number of profiles to swipe (-1 for unlimited until out of profiles)'),
+    chance: z.number().min(0).max(100).describe('Chance of swiping right (0-100)'),
+    timeout: timeoutParam,
+  },
+  async ({ count, chance, timeout }) => {
+    return withTimeout('tinder_swipe_blindly', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_swipe_blindly] Starting: count=${count}, chance=${chance}%`);
+      const result = await swipeBlindly(page, count, chance);
+      logger.info(`[tinder_swipe_blindly] Done: ${JSON.stringify(result)}`);
+      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+    }, timeout ?? 600000);
+  }
+);
+
+server.tool(
+  'tinder_sweep_explore',
+  'Swipe blindly across all explore categories (skips Long-term partner). Count accumulates across categories — moves to the next when a category runs out.',
+  {
+    count: z.number().describe('Total profiles to swipe across all categories (-1 for unlimited)'),
+    chance: z.number().min(0).max(100).describe('Chance of swiping right (0-100)'),
+    timeout: timeoutParam,
+  },
+  async ({ count, chance, timeout }) => {
+    return withTimeout('tinder_sweep_explore', async () => {
+      await ensureBrowser();
+      const page = getPage();
+      logger.info(`[tinder_sweep_explore] Starting: count=${count}, chance=${chance}%`);
+      const result = await sweepExploreCategories(page, count, chance);
+      logger.info(`[tinder_sweep_explore] Done: ${JSON.stringify(result)}`);
+      return { content: [{ type: 'text', text: sanitize(JSON.stringify(result, null, 2)) }] };
+    }, timeout ?? 600000);
   }
 );
 

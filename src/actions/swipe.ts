@@ -74,10 +74,14 @@ export async function swipeSession(
   // Dismiss any popups before navigating (e.g. privacy dialog)
   await dismissPopups(page);
 
-  // Navigate to recs
-  await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(randomize(3000));
-  await dismissPopups(page);
+  // Navigate to recs only if not already on a swipe-capable page (recs or explore category)
+  const url = page.url();
+  const onSwipePage = url.includes('/app/recs') || url.includes('/app/explore');
+  if (!onSwipePage) {
+    await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(randomize(3000));
+    await dismissPopups(page);
+  }
 
   for (let i = 0; i < count; i++) {
     logger.info(`Swipe ${i + 1}/${count}`);
@@ -143,4 +147,70 @@ export async function swipeSession(
 
   logger.info(`Swipe session complete: ${likes} likes, ${passes} passes, ${matches} matches`);
   return { likes, passes, matches };
+}
+
+/** Swipe blindly without reading profiles. count=-1 means until out of profiles. */
+export async function swipeBlindly(
+  page: Page,
+  count: number,
+  likeChance: number
+): Promise<{ likes: number; passes: number; matches: number; total: number }> {
+  const ratio = Math.max(0, Math.min(100, likeChance)) / 100;
+  let likes = 0, passes = 0, matches = 0, total = 0;
+  const unlimited = count === -1;
+  let consecutiveFails = 0;
+
+  await dismissPopups(page);
+
+  const url = page.url();
+  const onSwipePage = url.includes('/app/recs') || url.includes('/app/explore');
+  if (!onSwipePage) {
+    await page.goto('https://tinder.com/app/recs', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(randomize(3000));
+    await dismissPopups(page);
+  }
+
+  while (unlimited || total < count) {
+    const shouldLike = Math.random() < ratio;
+
+    let success: boolean;
+    if (shouldLike) {
+      success = await swipeRight(page);
+      if (success) likes++;
+    } else {
+      success = await swipeLeft(page);
+      if (success) passes++;
+    }
+
+    if (success) {
+      consecutiveFails = 0;
+      total++;
+      if (total % 10 === 0) {
+        logger.info(`[swipeBlindly] Progress: ${total} swiped (${likes} likes, ${passes} passes)`);
+      }
+    } else {
+      consecutiveFails++;
+      await dismissPopups(page);
+
+      // Check for "out of profiles" message
+      const outOfProfiles = await page.evaluate(() =>
+        document.body.innerText.includes("We've run out of potential matches")
+      );
+      if (outOfProfiles) {
+        logger.info(`[swipeBlindly] "We've run out of potential matches" detected`);
+        break;
+      }
+
+      if (consecutiveFails >= 3) {
+        logger.info(`[swipeBlindly] 3 consecutive fails — out of profiles`);
+        break;
+      }
+    }
+
+    // Brief delay to avoid detection
+    await page.waitForTimeout(randomize(800, 0.4));
+  }
+
+  logger.info(`[swipeBlindly] Done: ${total} swiped (${likes} likes, ${passes} passes, ${matches} matches)`);
+  return { likes, passes, matches, total };
 }
