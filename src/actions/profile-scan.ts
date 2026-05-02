@@ -100,9 +100,13 @@ async function scrapeProfileData(page: Page): Promise<Partial<ProfileScan>> {
       if (text) result.lookingFor = text.trim();
     }
 
-    // Bio/About - text that appears before the sections
-    const bioEl = document.querySelector('[class*="BreakWord"]');
-    if (bioEl) result.bio = bioEl.textContent?.trim() || '';
+    // Bio/About me - text under the "About me" h2 in the profile pane
+    const aboutH2 = Array.from(document.querySelectorAll('h2')).find(h => h.textContent?.trim() === 'About me');
+    if (aboutH2) {
+      const container = aboutH2.closest('div')?.parentElement;
+      const bioText = container?.querySelector('[class*="body-1-regular"][class*="text-primary"]')?.textContent;
+      if (bioText) result.bio = bioText.trim();
+    }
 
     // Extract section data (Essentials, Lifestyle, Basics)
     function extractSection(sectionName: string): Record<string, string> {

@@ -3,9 +3,36 @@ import { S } from '../selectors';
 import { randomize } from '../utils/delay';
 import logger from '../utils/logger';
 
+const COMMERCIAL_RE = /special offer|expires soon|save \d+%|super like|tinder (gold|plus|platinum)|unlock|subscribe|upgrade|boost yourself|see who likes you/i;
+
+/** Dismiss the in-app commercial/upsell modal Tinder shows on entry. Escape works on it. */
+async function dismissCommercialModal(page: Page): Promise<boolean> {
+  try {
+    const hasCommercial = await page.evaluate((reSrc) => {
+      const re = new RegExp(reSrc, 'i');
+      const dialogs = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')) as HTMLElement[];
+      return dialogs.some(d => {
+        const r = d.getBoundingClientRect();
+        return r.width > 100 && r.height > 100 && re.test(d.innerText || '');
+      });
+    }, COMMERCIAL_RE.source);
+    if (!hasCommercial) return false;
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(randomize(400));
+    logger.info('Dismissed commercial/upsell modal via Escape');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Try to dismiss any popups/modals that Tinder throws at us */
 export async function dismissPopups(page: Page): Promise<void> {
-  // First: dismiss the Privacy Preferences / cookie banner
+  // First: dismiss the in-app commercial (Super Like upsell, etc.) — Escape closes it
+  await dismissCommercialModal(page);
+
+  // Then: dismiss the Privacy Preferences / cookie banner
   try {
     const privacyDialog = page.locator('[aria-label="Privacy Preferences"]');
     if (await privacyDialog.isVisible({ timeout: 500 })) {

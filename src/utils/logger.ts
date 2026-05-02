@@ -13,7 +13,7 @@ const logger = winston.createLogger({
     winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level.toUpperCase()}] ${message}`)
   ),
   transports: [
-    new winston.transports.Console(),
+    new winston.transports.Console({ stderrLevels: ['error', 'warn', 'info', 'debug'] }),
     new winston.transports.File({ filename: config.logging.file }),
   ],
 });

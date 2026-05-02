@@ -568,6 +568,37 @@ server.tool('tinder_close', 'Close the browser', { timeout: timeoutParam }, asyn
   }, timeout ?? DEFAULT_TIMEOUT_MS);
 });
 
+// Catch unhandled errors so the process doesn't die silently
+process.on('unhandledRejection', (reason) => {
+  logger.error(`Unhandled rejection: ${reason instanceof Error ? reason.stack || reason.message : reason}`);
+});
+process.on('uncaughtException', (err) => {
+  logger.error(`Uncaught exception: ${err.stack || err.message}`);
+});
+
+// Clean up browser when stdin closes (Claude Code disconnects)
+process.stdin.on('end', async () => {
+  logger.info('stdin closed, cleaning up browser...');
+  await closeBrowser();
+  process.exit(0);
+});
+
+// Clean up browser on SIGINT/SIGTERM so the lock is released and Chromium isn't orphaned
+let shuttingDown = false;
+async function gracefulShutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info(`Received ${signal}, closing browser...`);
+  try {
+    await closeBrowser();
+  } catch (err: any) {
+    logger.error(`Error during shutdown: ${err.message}`);
+  }
+  process.exit(0);
+}
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
 // Start server
 async function main() {
   const transport = new StdioServerTransport();
